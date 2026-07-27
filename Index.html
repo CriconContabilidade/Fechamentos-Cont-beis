@@ -592,6 +592,44 @@ async function toggleAllItems(clientId, field){
   render();
 }
 
+const STATUS_ORDER = {pendente:0, em_conferencia:1, revisao_final:2, concluido:3};
+
+async function cascadePreviousMonths(clientId, targetStatus){
+  const targetRank = STATUS_ORDER[targetStatus];
+  let key = shiftMonth(currentMonthKey, -1);
+  let updated = 0;
+  for(let i=0; i<24; i++){
+    let raw;
+    try{ raw = await window.__fbGet('month:'+key); }catch(e){ raw = null; }
+    const data = raw ? JSON.parse(raw) : {};
+    let entry = data[clientId];
+    const rank = entry ? STATUS_ORDER[entry.status] : -1;
+    if(rank >= targetRank){ break; } // esse mês (e os anteriores a ele, presumivelmente) já estão em dia
+    if(!entry){
+      entry = {
+        status:'pendente',
+        checklist: config.checklistTemplate.map((t,idx)=>{
+          const text = typeof t==='string' ? t : t.text;
+          const guide = typeof t==='string' ? '' : (t.guide||'');
+          return {id:'i'+idx, text, guide, done:false, confDone:false, note:''};
+        }),
+        executor:null, executedAt:null, conferente:null, conferidoAt:null, aprovador:null, finalizadoAt:null, history:[]
+      };
+    }
+    entry.checklist.forEach(it=>{ it.done = true; if(targetRank>=2) it.confDone = true; });
+    entry.status = targetStatus;
+    if(targetRank>=1 && !entry.executor){ entry.executor = currentUser; entry.executedAt = nowStr(); }
+    if(targetRank>=2 && !entry.conferente){ entry.conferente = currentUser; entry.conferidoAt = nowStr(); }
+    if(targetRank>=3){ entry.aprovador = currentUser; entry.finalizadoAt = nowStr(); }
+    entry.history = entry.history || [];
+    entry.history.push({t: nowStr(), who: currentUser, what: `Atualizado automaticamente em lote a partir do fechamento de ${monthLabel(currentMonthKey)}`});
+    data[clientId] = entry;
+    try{ await window.__fbSet('month:'+key, JSON.stringify(data)); updated++; }catch(e){ console.error(e); break; }
+    key = shiftMonth(key, -1);
+  }
+  return updated;
+}
+
 async function sendToConference(clientId){
   const c = getClosing(clientId);
   if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
@@ -605,6 +643,10 @@ async function approveConference(clientId){
   c.status='revisao_final'; c.conferente=currentUser; c.conferidoAt=nowStr();
   c.history.push({t:nowStr(), who:currentUser, what:'Aprovou a conferência'});
   await saveMonth(); render();
+  if(confirm('Aplicar essa aprovação de conferência também aos meses anteriores em aberto deste cliente?')){
+    const n = await cascadePreviousMonths(clientId, 'revisao_final');
+    alert(n>0 ? `${n} mês(es) anterior(es) atualizado(s) para "Revisão final".` : 'Não havia meses anteriores pendentes para atualizar.');
+  }
 }
 async function finalizeClosing(clientId){
   const c = getClosing(clientId);
@@ -612,6 +654,10 @@ async function finalizeClosing(clientId){
   c.status='concluido'; c.aprovador=currentUser; c.finalizadoAt=nowStr();
   c.history.push({t:nowStr(), who:currentUser, what:'Finalizou o fechamento'});
   await saveMonth(); render();
+  if(confirm('Marcar também como concluídos os meses anteriores em aberto deste cliente?')){
+    const n = await cascadePreviousMonths(clientId, 'concluido');
+    alert(n>0 ? `${n} mês(es) anterior(es) marcado(s) como concluído.` : 'Não havia meses anteriores pendentes para fechar.');
+  }
 }
 async function reopenClosing(clientId){
   if(!confirm('Reabrir este fechamento? Os itens marcados voltarão a ficar pendentes.')) return;
