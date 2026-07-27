@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Fechamentos Contábeis</title>
+<script>
+  window.__fbReady = new Promise(resolve => { window.__fbReadyResolve = resolve; });
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#1A1A1A;
+  --ink-soft:#65656B;
+  --paper:#E7E6E2;
+  --paper-raised:#FFFFFF;
+  --rule:#D6D5D1;
+  --rule-strong:#A9A7A2;
+  --red:#A6392C;
+  --red-bg:#F6E1DC;
+  --amber:#8A6400;
+  --amber-bg:#FCEEA9;
+  --blue:#333333;
+  --blue-bg:#C8C7C3;
+  --green:#FFFFFF;
+  --green-bg:#161616;
+  --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.06);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.app{max-width:980px;margin:0 auto;padding:28px 20px 80px;}
+
+/* header */
+.topbar{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding-bottom:18px;margin-bottom:22px;
+  border-bottom:2px solid var(--ink);
+  gap:16px;flex-wrap:wrap;
+}
+.brand h1{
+  font-family:'Source Serif 4',serif;
+  font-size:26px;font-weight:800;margin:0 0 2px;letter-spacing:-0.01em;
+}
+.brand .sub{font-size:12.5px;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
+.top-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+select, .btn, input[type=text]{
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13.5px;
+}
+select{
+  padding:8px 10px;border:1.5px solid var(--ink);border-radius:3px;background:var(--paper-raised);color:var(--ink);font-weight:500;
+}
+.btn{
+  padding:8px 14px;border-radius:3px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);
+  cursor:pointer;font-weight:600;transition:transform .08s ease, opacity .15s;
+}
+.btn:hover{opacity:.88;}
+.btn:active{transform:translateY(1px);}
+.btn.ghost{background:transparent;color:var(--ink);}
+.btn.ghost:hover{background:rgba(0,0,0,0.06);}
+.btn.small{padding:5px 10px;font-size:12px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.icon-btn{
+  width:34px;height:34px;border-radius:50%;border:1.5px solid var(--ink);background:transparent;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--ink);
+}
+.icon-btn:hover{background:rgba(0,0,0,0.06);}
+
+/* month nav */
+.month-nav{
+  display:flex;align-items:center;gap:12px;margin-bottom:20px;
+}
+.month-nav .month-label{
+  font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.02em;
+  min-width:150px;text-align:center;text-transform:capitalize;
+}
+.who{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);}
+
+/* ledger table */
+.ledger{
+  background:var(--paper-raised);border:1.5px solid var(--ink);border-radius:4px;overflow:hidden;box-shadow:var(--shadow);
+}
+.ledger-head{
+  display:grid;grid-template-columns:1fr 150px 130px 170px 40px;
+  padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-soft);border-bottom:1.5px solid var(--rule-strong);background:rgba(0,0,0,0.02);
+}
+.ledger-row{
+  display:grid;grid-template-columns:1fr 150px 130px 170px 40px;align-items:center;
+  padding:14px 16px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .12s;
+}
+.ledger-row:last-child{border-bottom:none;}
+.ledger-row:hover{background:rgba(0,0,0,0.03);}
+.client-name{font-weight:600;font-size:14.5px;}
+.client-name .assign{display:block;font-size:11.5px;color:var(--ink-soft);font-weight:400;margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+.note-flag{font-size:12px;vertical-align:middle;}
+.responsible-tag{
+  display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.02em;
+  color:var(--blue);background:var(--blue-bg);padding:2px 7px;border-radius:10px;vertical-align:middle;margin-left:4px;
+}
+.regime-cell{font-size:12px;color:var(--ink-soft);}
+.regime-cell.empty{color:var(--rule-strong);font-style:italic;}
+.progress-wrap{display:flex;align-items:center;gap:8px;}
+.progress-bar{flex:1;height:6px;border-radius:3px;background:var(--rule);overflow:hidden;}
+.progress-bar > div{height:100%;background:var(--ink);border-radius:3px;transition:width .25s ease;}
+.progress-pct{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);width:32px;text-align:right;}
+.chev{color:var(--rule-strong);font-size:18px;}
+
+.filter-bar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;
+}
+.filter-bar input[type=text]{
+  flex:1;min-width:160px;padding:8px 10px;border:1.5px solid var(--rule-strong);border-radius:3px;background:var(--paper-raised);
+}
+.filter-bar select{padding:8px 10px;border:1.5px solid var(--rule-strong);border-radius:3px;background:var(--paper-raised);font-size:12.5px;}
+.filter-bar .spacer{flex:1;}
+.filter-bar .export-group{display:flex;gap:8px;margin-left:auto;}
+
+/* stamp */
+.stamp{
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:'Source Serif 4',serif;font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 10px;border-radius:3px;border:1.5px solid currentColor;transform:rotate(-1.5deg);white-space:nowrap;
+}
+.stamp.pendente{color:var(--red);background:var(--red-bg);}
+.stamp.em_conferencia{color:var(--amber);background:var(--amber-bg);}
+.stamp.revisao_final{color:var(--blue);background:var(--blue-bg);}
+.stamp.concluido{color:var(--green);background:var(--green-bg);}
+
+.empty-state{
+  padding:60px 20px;text-align:center;color:var(--ink-soft);
+}
+.empty-state h3{font-family:'Source Serif 4',serif;color:var(--ink);font-size:19px;margin-bottom:6px;}
+.empty-state p{font-size:13.5px;margin:0 0 16px;}
+
+/* modal */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:flex-start;justify-content:center;
+  padding:40px 16px;overflow-y:auto;z-index:50;
+}
+.modal{
+  background:var(--paper-raised);border-radius:6px;max-width:620px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.25);
+  border:1.5px solid var(--ink);
+}
+.modal-head{
+  display:flex;justify-content:space-between;align-items:flex-start;padding:20px 24px;border-bottom:1.5px solid var(--rule-strong);
+}
+.modal-head h2{font-family:'Source Serif 4',serif;font-size:20px;margin:0 0 4px;}
+.modal-head .meta{font-size:12px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+.modal-body{padding:22px 24px;}
+.modal-foot{padding:16px 24px 22px;border-top:1px solid var(--rule);display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+.close-x{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);line-height:1;padding:4px;}
+.close-x:hover{color:var(--ink);}
+
+/* trail */
+.trail{display:flex;align-items:center;gap:6px;margin-bottom:22px;}
+.trail .node{
+  flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;
+  padding:8px 4px;border-radius:3px;background:var(--rule);color:var(--ink-soft);position:relative;
+}
+.trail .node.active{background:var(--ink);color:var(--paper);font-weight:600;}
+.trail .node.done{background:var(--rule-strong);color:var(--ink);font-weight:600;}
+.trail .node.done::after{content:" ✓";}
+
+.checklist{list-style:none;margin:0 0 18px;padding:0;border-top:1px solid var(--rule);}
+.select-all-row{
+  display:flex;align-items:center;gap:8px;padding:8px 2px;cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.02em;color:var(--ink-soft);
+  border-bottom:1px dashed var(--rule-strong);
+}
+.select-all-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--ink);cursor:pointer;}
+.checklist li{
+  display:flex;align-items:flex-start;gap:10px;padding:11px 2px;border-bottom:1px solid var(--rule);font-size:13.5px;
+}
+.checklist li.done{color:var(--ink-soft);}
+.checklist li.done > .item-body > span{text-decoration:line-through;text-decoration-color:var(--rule-strong);}
+.checklist input[type=checkbox]{width:17px;height:17px;accent-color:var(--ink);cursor:pointer;flex-shrink:0;margin-top:2px;}
+.checklist input[type=checkbox]:disabled{cursor:not-allowed;}
+.item-body{flex:1;min-width:0;}
+details.guide{margin-top:5px;}
+details.guide summary{
+  cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue);letter-spacing:.02em;list-style:none;
+  display:inline-flex;align-items:center;gap:4px;
+}
+details.guide summary::-webkit-details-marker{display:none;}
+details.guide summary::before{content:"›";transition:transform .15s;}
+details.guide[open] summary::before{transform:rotate(90deg);}
+details.guide p{
+  margin:6px 0 0;padding:9px 11px;background:rgba(0,0,0,0.05);border-left:2px solid var(--blue);border-radius:0 3px 3px 0;
+  font-size:12.5px;line-height:1.5;color:var(--ink-soft);white-space:pre-wrap;
+}
+.note-field{margin-top:8px;}
+.note-field label{
+  display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--ink-soft);margin-bottom:4px;
+}
+.note-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block;}
+.note-field input{
+  width:100%;padding:7px 10px;border:1px solid var(--rule-strong);border-radius:3px;background:var(--paper);
+  font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;color:var(--ink);
+}
+.note-field input:focus{outline:none;border-color:var(--blue);}
+.note-field input:disabled{background:transparent;color:var(--ink-soft);border-color:var(--rule);}
+.note-field input::placeholder{color:var(--rule-strong);}
+
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:18px 0 8px;}
+
+.signoffs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px;}
+.signoff{border:1px solid var(--rule);border-radius:4px;padding:10px;font-size:11.5px;}
+.signoff .role{font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-size:10px;margin-bottom:4px;}
+.signoff .name{font-weight:600;font-size:13px;}
+.signoff .empty{color:var(--rule-strong);font-style:italic;}
+
+.hint{font-size:12px;color:var(--ink-soft);background:rgba(0,0,0,0.04);border-radius:4px;padding:10px 12px;margin-top:4px;}
+.hint.warn{background:var(--amber-bg);color:#5C4400;font-weight:600;border-left:3px solid var(--amber);}
+
+.history{margin-top:16px;}
+.history ul{list-style:none;margin:0;padding:0;}
+.history li{font-size:12px;color:var(--ink-soft);padding:5px 0;border-bottom:1px dashed var(--rule);font-family:'IBM Plex Mono',monospace;}
+
+/* config */
+.cfg-block{margin-bottom:24px;}
+.cfg-block h3{font-family:'Source Serif 4',serif;font-size:15.5px;margin:0 0 10px;}
+.cfg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+.cfg-item{display:flex;align-items:center;gap:8px;}
+.cfg-item input[type=text]{flex:1;padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;background:var(--paper);}
+.cfg-item select{width:172px;flex-shrink:0;padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;background:var(--paper);font-size:12px;}
+.cfg-item .del{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:2px 6px;}
+.cfg-client-item{border:1px solid var(--rule);border-radius:4px;padding:8px;margin-bottom:2px;}
+.cfg-client-item .cfg-item{margin-bottom:6px;}
+.cfg-client-selects{display:flex;gap:8px;}
+.cfg-client-selects select{flex:1;width:auto;padding:7px 8px;border:1px solid var(--rule-strong);border-radius:3px;background:var(--paper);font-size:12px;}
+
+#printReport{display:none;}
+@media print{
+  body *{visibility:hidden;}
+  #printReport, #printReport *{visibility:visible;}
+  #printReport{display:block !important;position:absolute;top:0;left:0;width:100%;padding:10px;}
+  #printReport h1{font-family:'Source Serif 4',serif;font-size:18px;margin:0 0 2px;}
+  #printReport h2{font-size:12.5px;font-weight:500;color:#555;margin:0 0 14px;}
+  #printReport table{width:100%;border-collapse:collapse;font-size:10.5px;}
+  #printReport th, #printReport td{border:1px solid #999;padding:6px 8px;text-align:left;}
+  #printReport th{background:#eee;}
+  #printReport .print-footer{margin-top:12px;font-size:9.5px;color:#777;}
+}
+.add-row{display:flex;gap:8px;}
+.add-row input{flex:1;padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;}
+.import-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.hint-inline{font-size:11.5px;color:var(--ink-soft);}
+.cfg-tpl-item{border:1px solid var(--rule);border-radius:4px;padding:8px;margin-bottom:2px;}
+.cfg-tpl-item .cfg-item{margin-bottom:0;}
+.guide-edit summary{
+  cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--blue);margin-top:6px;list-style:none;
+}
+.guide-edit summary::-webkit-details-marker{display:none;}
+.guide-edit textarea{
+  width:100%;margin-top:6px;padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;
+  font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;resize:vertical;background:var(--paper);
+}
+
+.loading{padding:80px 20px;text-align:center;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:13px;}
+
+.setup-screen{max-width:640px;margin:60px auto;padding:0 20px;}
+.setup-screen h2{font-family:'Source Serif 4',serif;font-size:22px;margin-bottom:6px;}
+.setup-screen p{font-size:13.5px;line-height:1.6;color:var(--ink-soft);}
+.setup-screen ol{padding-left:20px;font-size:13.5px;line-height:1.9;}
+.setup-screen code{
+  background:rgba(0,0,0,0.06);padding:2px 6px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+}
+.setup-screen .box{
+  background:var(--paper-raised);border:1.5px solid var(--ink);border-radius:6px;padding:20px 24px;margin-top:16px;
+}
+.login-box{max-width:340px;}
+.login-field{margin-bottom:14px;}
+.login-field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin-bottom:5px;}
+.login-field input{width:100%;padding:9px 11px;border:1.5px solid var(--rule-strong);border-radius:3px;background:var(--paper);font-size:14px;}
+.login-field input:focus{outline:none;border-color:var(--ink);}
+.login-error{color:var(--red);font-size:12.5px;min-height:16px;}
+
+@media (max-width:640px){
+  .ledger-head{display:none;}
+  .ledger-row{grid-template-columns:1fr auto;grid-template-areas:"name chev" "regime regime" "progress status";row-gap:6px;padding:14px;}
+  .client-name{grid-area:name;}
+  .chev{grid-area:chev;}
+  .regime-cell{grid-area:regime;}
+  .progress-wrap{grid-area:progress;}
+  .ledger-row > .stamp-cell{grid-area:status;justify-self:start;}
+  .signoffs{grid-template-columns:1fr;}
+  .month-nav{flex-wrap:wrap;}
+  .who{margin-left:0;width:100%;}
+  .filter-bar .export-group{margin-left:0;width:100%;}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="loading">Carregando dados do escritório…</div>
+</div>
+<div id="printReport"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  // ============================================================
+  //  COLE AQUI a configuração do seu projeto Firebase
+  //  (Console do Firebase > Configurações do projeto > Seus apps > Config)
+  // ============================================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJF5e8R1kXmOc8u_e6wHpwwD4hYHJQcv4",
+    authDomain: "fechamento-contabil-7f0b7.firebaseapp.com",
+    projectId: "fechamento-contabil-7f0b7",
+    storageBucket: "fechamento-contabil-7f0b7.firebasestorage.app",
+    messagingSenderId: "661081450640",
+    appId: "1:661081450640:web:dd144f63730a6a48465015",
+    measurementId: "G-8M7FRZQ79C"
+  };
+  // ============================================================
+
+  const COLLECTION = "fechamentos_escritorio";
+
+  window.__fbConfigured = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI";
+  window.__fbUser = null;
+
+  if(window.__fbConfigured){
+    try{
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+
+      window.__fbGet = async function(key){
+        const snap = await getDoc(doc(db, COLLECTION, key));
+        return snap.exists() ? snap.data().json : null;
+      };
+      window.__fbSet = async function(key, jsonStr){
+        await setDoc(doc(db, COLLECTION, key), { json: jsonStr, updatedAt: Date.now() });
+      };
+      window.__fbSignIn = async function(email, password){
+        try{
+          await signInWithEmailAndPassword(auth, email, password);
+          return { ok:true };
+        }catch(e){
+          return { ok:false, code: e.code || '' };
+        }
+      };
+      window.__fbSignOut = async function(){
+        await signOut(auth);
+      };
+
+      let authResolved = false;
+      onAuthStateChanged(auth, (user)=>{
+        window.__fbUser = user ? { email: user.email } : null;
+        if(!authResolved){
+          authResolved = true;
+          window.__fbReadyResolve();
+        }else if(window.__onAuthChange){
+          window.__onAuthChange();
+        }
+      });
+    }catch(e){
+      console.error('Erro ao iniciar Firebase', e);
+      window.__fbConfigured = false;
+      window.__fbReadyResolve();
+    }
+  }else{
+    window.__fbReadyResolve();
+  }
+</script>
+
+<script>
+const STORAGE_SHARED = true; // não usado mais — mantido apenas por compatibilidade de leitura
+
+const DEFAULT_CHECKLIST = [
+  { text: "Receita x Faturamento",
+    guide: "Na Escrita Fiscal: Relatórios > Acompanhamentos > Demonstrativo Faturamento, informe o período. No Contábil: Relatórios > Balancete, localize a conta 3.1.1.01 Receita Operacional e a conta de Devoluções. O saldo da Receita Operacional menos as Devoluções deve bater com o total do relatório de Faturamento. Se der diferença, regere os lançamentos em Utilitários > Regerar > Lançamentos Contábeis ou confira lançamentos manuais na conta de receita." },
+  { text: "Saldo de Fornecedores e Clientes",
+    guide: "Na Escrita Fiscal: Relatório > Contas a Pagar e a Receber > A Pagar ou A Receber, com \"Posição em\" na data final do período e situação \"Aberta/Paga parcial\". No Contábil: Relatórios > Balancete, o saldo final do grupo de Fornecedores ou Clientes deve bater com o total do relatório. Em caso de diferença, confira nota por nota: lançamento não gerado, pagamento lançado manualmente, parcelas de notas canceladas ou devoluções não baixadas corretamente." },
+  { text: "Saldos dos impostos",
+    guide: "Na Escrita Fiscal: Relatórios > Impostos > Pagamentos, com data inicial no começo da empresa no sistema e situação \"Somente em Aberto\", selecione o imposto. No Contábil: Relatórios > Balancete, localize a conta analítica do imposto — o saldo final deve bater com o relatório. Se houver diferença, confira o Razão da conta: normalmente só entram lançamentos de apuração e de pagamento." },
+  { text: "Obrigações Trabalhistas",
+    guide: "Confira Salários/Rescisão/Pró-labore, FGTS, INSS e IRRF. Na Folha: Processos > Pagamentos (guias Folha e Encargos) e Relatórios > Encargos (INSS/IRRF), no período desejado. No Contábil: Relatórios > Balancete, compare os saldos de Salários a Pagar, FGTS a Pagar, INSS a Recolher e IRRF a Recolher com os relatórios da Folha. Diferenças geralmente vêm de rubricas mal configuradas em Arquivo > Contabilidade > Configurar Integração, ou de INSS/IRRF pagos juntos que precisam ser separados manualmente em Movimentos > Lançamentos." },
+  { text: "Provisão de Férias",
+    guide: "Na Folha: Relatórios > Provisões > Férias, modelo \"Completo\", conferindo o último mês do período. Some férias, INSS (Empresa + RAT + Terceiros) e FGTS na linha \"Saldo Atual\" e compare com as contas de Férias a Pagar e FGTS s/Férias no Balancete. Obs.: férias quebradas entre dois meses podem não fechar até o mês seguinte." },
+  { text: "Provisão de 13º Salário",
+    guide: "Na Folha: Relatórios > Provisões > Décimo Terceiro, modelo \"Completo\" e marcando \"Descontar 13º pago no mês\". Some 13º salário, INSS (Empresa + RAT + Terceiros) e FGTS na linha \"Saldo Atual\" e compare com as contas de 13º Salário a Pagar e FGTS s/13º no Balancete. Obs.: em novembro pode não fechar por causa da 1ª parcela paga antes." },
+  { text: "Saldo do Imobilizado",
+    guide: "No Patrimônio: Relatórios > Cálculo > Depreciação Fiscal, agrupando por Conta Patrimonial e marcando \"Imprimir bens não depreciáveis\". No Contábil: Relatórios > Balancete, o saldo do Imobilizado menos a Depreciação Acumulada deve bater com o relatório (somando Benfeitorias/Software, se houver). Se der erro, verifique se é do período atual (bem faltando) ou de período anterior (precisa de ajuste de exercícios anteriores)." },
+  { text: "Conta Bancária e Aplicações",
+    guide: "No Contábil: Relatórios > Balancete, compare cada conta banco/aplicação com os extratos bancários, lançamento por lançamento. Saldo negativo de banco deve ser zerado transferindo para uma conta de passivo \"Cheque Especial Banco\" — nunca as duas contas podem ter saldo ao mesmo tempo." },
+  { text: "Corrigir Conta de custos para Despesas",
+    guide: "" },
+  { text: "Eliminar Contas iguais",
+    guide: "No Contábil: Relatórios > Balancete, verifique se há clientes/fornecedores com a mesma descrição em contas diferentes (comum quando o mesmo cliente emite notas por filiais/CNPJs distintos). Ajuste a \"Conta Patrimonial\" de cada cadastro em Arquivos > Clientes/Fornecedores para unificar." },
+  { text: "Ver Despesas mensais",
+    guide: "No Contábil: Relatórios > Análises > Vertical do D.R.E., começando em janeiro até o mês desejado, variação de 1 mês. Confira se despesas recorrentes (aluguel, água, luz, telefone, condomínio, internet etc.) aparecem todo mês; meses zerados podem indicar pagamento adiantado ou lançamento faltando." },
+  { text: "Eliminar saldos Negativos",
+    guide: "No Contábil: Relatórios > Balancete, confira se contas do Ativo estão devedoras e contas do Passivo/Patrimônio Líquido estão credoras (exceto contas redutoras, como depreciação). Se houver saldo invertido, abra o Razão da conta para achar lançamento manual incorreto ou lançamento faltando." },
+  { text: "Conferir Históricos no Diário",
+    guide: "" },
+  { text: "Comparar Lucro balanço x Lucro DRE",
+    guide: "No Contábil: compare o Balancete com Relatórios > Demonstrativos > DRE, no mesmo período. O \"Resultado Líquido Antes do IR e CS\" do DRE deve bater com o saldo da conta 300 - Demonstrativo Resultado do Exercício antes do zeramento. Se não bater, confira se contas sintéticas estão sem configuração de DRE (\"Não faz parte\") e se todas as contas analíticas têm o Grupo DRE preenchido, em Arquivos > Contas Contábeis." }
+];
+
+const TAX_REGIMES = ["Simples Nacional", "Lucro Presumido", "Lucro Real", "Isenta/Imune", "MEI"];
+
+let config = null;
+let monthData = {};
+let currentMonthKey = monthKeyFromDate(new Date());
+let currentUser = "";
+let openClientId = null;
+let showConfig = false;
+let loaded = false;
+let pendingScrollRestore = 0;
+let filterSearch = "";
+let filterStatus = "";
+let filterRegime = "";
+let filterResponsible = "";
+let sortBy = "name";
+
+function monthKeyFromDate(d){
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+}
+function monthLabel(key){
+  const [y,m] = key.split("-").map(Number);
+  const names = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  return names[m-1] + " de " + y;
+}
+function shiftMonth(key, delta){
+  let [y,m] = key.split("-").map(Number);
+  m += delta;
+  if(m<1){m=12;y--;} if(m>12){m=1;y++;}
+  return y + "-" + String(m).padStart(2,"0");
+}
+function nowStr(){
+  return new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function uid(prefix){ return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+async function boot(){
+  await window.__fbReady;
+  if(!window.__fbConfigured){
+    loaded = 'setup';
+    render();
+    return;
+  }
+  if(!window.__fbUser){
+    loaded = 'login';
+    render();
+    return;
+  }
+  await loadAll();
+}
+
+window.__onAuthChange = function(){
+  if(!window.__fbUser){
+    loaded = 'login';
+    config = null;
+    render();
+  }else if(loaded==='login'){
+    loadAll();
+  }
+};
+
+async function handleLogin(){
+  const emailEl = document.getElementById('loginEmail');
+  const passEl = document.getElementById('loginPassword');
+  const errEl = document.getElementById('loginError');
+  const email = emailEl.value.trim();
+  const password = passEl.value;
+  errEl.textContent = '';
+  if(!email || !password){ errEl.textContent = 'Preencha e-mail e senha.'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  const result = await window.__fbSignIn(email, password);
+  if(!result.ok){
+    errEl.textContent = 'E-mail ou senha inválidos.';
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+  // sucesso: onAuthStateChanged dispara e carrega os dados automaticamente
+}
+
+async function handleLogout(){
+  await window.__fbSignOut();
+}
+
+async function loadAll(){
+  try{
+    const raw = await window.__fbGet('config');
+    config = raw ? JSON.parse(raw) : null;
+  }catch(e){ console.error(e); config = null; }
+  if(!config){
+    config = { officeName: "Meu Escritório Contábil", teamMembers: [], clients: [], checklistTemplate: DEFAULT_CHECKLIST.slice() };
+  }
+  await loadMonth(currentMonthKey);
+  loaded = true;
+  render();
+}
+
+async function loadMonth(key){
+  try{
+    const raw = await window.__fbGet('month:'+key);
+    monthData = raw ? JSON.parse(raw) : {};
+  }catch(e){
+    console.error(e);
+    monthData = {};
+  }
+}
+
+async function saveConfig(){
+  try{
+    await window.__fbSet('config', JSON.stringify(config));
+  }catch(e){ console.error('Erro ao salvar configuração', e); alert('Não foi possível salvar as configurações. Verifique sua conexão e as regras do Firestore.'); }
+}
+async function saveMonth(){
+  try{
+    await window.__fbSet('month:'+currentMonthKey, JSON.stringify(monthData));
+  }catch(e){ console.error('Erro ao salvar fechamento', e); alert('Não foi possível salvar. Verifique sua conexão e as regras do Firestore.'); }
+}
+
+function getClosing(clientId){
+  if(!monthData[clientId]){
+    monthData[clientId] = {
+      status:'pendente',
+      checklist: config.checklistTemplate.map((t,i)=>{
+        const text = typeof t === 'string' ? t : t.text;
+        const guide = typeof t === 'string' ? '' : (t.guide||'');
+        return {id:'i'+i, text, guide, done:false, confDone:false, note:''};
+      }),
+      executor:null, executedAt:null,
+      conferente:null, conferidoAt:null,
+      aprovador:null, finalizadoAt:null,
+      history:[]
+    };
+  }
+  return monthData[clientId];
+}
+
+function pct(closing){
+  const stage = closing.status;
+  const total = closing.checklist.length || 1;
+  if(stage==='pendente'){
+    return Math.round(100*closing.checklist.filter(i=>i.done).length/total);
+  }
+  if(stage==='em_conferencia'){
+    return Math.round(100*closing.checklist.filter(i=>i.confDone).length/total);
+  }
+  return 100;
+}
+
+const STAGE_LABELS = {pendente:'Pendente', em_conferencia:'Em conferência', revisao_final:'Revisão final', concluido:'Concluído'};
+
+/* ---------- actions ---------- */
+async function toggleItem(clientId, itemId, field){
+  if(!currentUser){ alert('Selecione seu nome no topo da página antes de marcar itens.'); return; }
+  const c = getClosing(clientId);
+  const item = c.checklist.find(i=>i.id===itemId);
+  if(!item) return;
+  item[field] = !item[field];
+  await saveMonth();
+  render();
+}
+
+async function updateItemNote(clientId, itemId, value){
+  const c = getClosing(clientId);
+  const item = c.checklist.find(i=>i.id===itemId);
+  if(!item) return;
+  item.note = value;
+  await saveMonth();
+  render();
+}
+
+async function toggleAllItems(clientId, field){
+  if(!currentUser){ alert('Selecione seu nome no topo da página antes de marcar itens.'); return; }
+  const c = getClosing(clientId);
+  const allMarked = c.checklist.every(i=>i[field]);
+  c.checklist.forEach(i=>{ i[field] = !allMarked; });
+  await saveMonth();
+  render();
+}
+
+async function sendToConference(clientId){
+  const c = getClosing(clientId);
+  if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
+  c.status='em_conferencia'; c.executor=currentUser; c.executedAt=nowStr();
+  c.history.push({t:nowStr(), who:currentUser, what:'Enviou para conferência'});
+  await saveMonth(); render();
+}
+async function approveConference(clientId){
+  const c = getClosing(clientId);
+  if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
+  c.status='revisao_final'; c.conferente=currentUser; c.conferidoAt=nowStr();
+  c.history.push({t:nowStr(), who:currentUser, what:'Aprovou a conferência'});
+  await saveMonth(); render();
+}
+async function finalizeClosing(clientId){
+  const c = getClosing(clientId);
+  if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
+  c.status='concluido'; c.aprovador=currentUser; c.finalizadoAt=nowStr();
+  c.history.push({t:nowStr(), who:currentUser, what:'Finalizou o fechamento'});
+  await saveMonth(); render();
+}
+async function reopenClosing(clientId){
+  if(!confirm('Reabrir este fechamento? Os itens marcados voltarão a ficar pendentes.')) return;
+  const c = getClosing(clientId);
+  c.status='pendente';
+  c.checklist.forEach(i=>{i.done=false; i.confDone=false;});
+  c.history.push({t:nowStr(), who:currentUser||'—', what:'Reabriu o fechamento'});
+  await saveMonth(); render();
+}
+
+async function addClient(name){
+  if(!name.trim()) return;
+  config.clients.push({id: uid('cl'), name: name.trim(), taxRegime: '', responsible: ''});
+  await saveConfig(); render();
+}
+async function updateClientName(id, value){
+  const cl = config.clients.find(c=>c.id===id);
+  if(!cl || !value.trim()) return;
+  cl.name = value.trim();
+  await saveConfig();
+}
+async function updateClientRegime(id, value){
+  const cl = config.clients.find(c=>c.id===id);
+  if(!cl) return;
+  cl.taxRegime = value;
+  await saveConfig(); render();
+}
+async function updateClientResponsible(id, value){
+  const cl = config.clients.find(c=>c.id===id);
+  if(!cl) return;
+  cl.responsible = value;
+  await saveConfig(); render();
+}
+function setFilterSearch(value){ filterSearch = value; render(); }
+function setFilterStatus(value){ filterStatus = value; render(); }
+function setFilterRegime(value){ filterRegime = value; render(); }
+function setFilterResponsible(value){ filterResponsible = value; render(); }
+function setSortBy(value){ sortBy = value; render(); }
+
+function getFilteredSortedClients(){
+  let list = config.clients.map(cl=>({ cl, c: getClosing(cl.id) }));
+  if(filterSearch.trim()){
+    const q = filterSearch.trim().toLowerCase();
+    list = list.filter(x=>x.cl.name.toLowerCase().includes(q));
+  }
+  if(filterStatus){
+    list = list.filter(x=>x.c.status===filterStatus);
+  }
+  if(filterRegime){
+    if(filterRegime==='__none__'){ list = list.filter(x=>!x.cl.taxRegime); }
+    else{ list = list.filter(x=>x.cl.taxRegime===filterRegime); }
+  }
+  if(filterResponsible){
+    if(filterResponsible==='__none__'){ list = list.filter(x=>!x.cl.responsible); }
+    else{ list = list.filter(x=>x.cl.responsible===filterResponsible); }
+  }
+  const statusOrder = {pendente:0, em_conferencia:1, revisao_final:2, concluido:3};
+  list.sort((a,b)=>{
+    if(sortBy==='regime') return (a.cl.taxRegime||'\uffff').localeCompare(b.cl.taxRegime||'\uffff') || a.cl.name.localeCompare(b.cl.name);
+    if(sortBy==='status') return (statusOrder[a.c.status]-statusOrder[b.c.status]) || a.cl.name.localeCompare(b.cl.name);
+    return a.cl.name.localeCompare(b.cl.name);
+  });
+  return list;
+}
+
+function exportExcel(){
+  if(typeof XLSX==='undefined'){ alert('Não foi possível carregar o gerador de Excel. Verifique sua conexão com a internet e tente novamente.'); return; }
+  const list = getFilteredSortedClients();
+  const rows = list.map(({cl,c})=>({
+    'Cliente': cl.name,
+    'Responsável': cl.responsible || '',
+    'Tributação': cl.taxRegime || 'Não informado',
+    'Status': STAGE_LABELS[c.status],
+    'Progresso': pct(c) + '%',
+    'Fechado por': c.executor || '',
+    'Conferido por': c.conferente || '',
+    'Aprovado por': c.aprovador || ''
+  }));
+  if(rows.length===0){ alert('Não há clientes para exportar com os filtros atuais.'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Fechamentos');
+  XLSX.writeFile(wb, `fechamentos_${currentMonthKey}.xlsx`);
+}
+
+function printReport(){
+  const list = getFilteredSortedClients();
+  if(list.length===0){ alert('Não há clientes para gerar o relatório com os filtros atuais.'); return; }
+  const rows = list.map(({cl,c})=>`
+    <tr>
+      <td>${escapeHtml(cl.name)}</td>
+      <td>${escapeHtml(cl.responsible||'—')}</td>
+      <td>${escapeHtml(cl.taxRegime||'—')}</td>
+      <td>${STAGE_LABELS[c.status]}</td>
+      <td>${pct(c)}%</td>
+      <td>${escapeHtml(c.executor||'—')}</td>
+      <td>${escapeHtml(c.conferente||'—')}</td>
+      <td>${escapeHtml(c.aprovador||'—')}</td>
+    </tr>`).join('');
+  const el = document.getElementById('printReport');
+  el.innerHTML = `
+    <h1>${escapeHtml(config.officeName)}</h1>
+    <h2>Relatório de fechamentos — ${monthLabel(currentMonthKey)} · gerado em ${nowStr()}</h2>
+    <table>
+      <thead><tr><th>Cliente</th><th>Responsável</th><th>Tributação</th><th>Status</th><th>Progresso</th><th>Fechado por</th><th>Conferido por</th><th>Aprovado por</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  window.print();
+}
+function handleImportClientsFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    const text = e.target.result;
+    const existingNames = new Set(config.clients.map(c=>c.name.trim().toLowerCase()));
+    const existingMembers = new Set(config.teamMembers.map(m=>m.toLowerCase()));
+    const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+    let added = 0, skipped = 0, newMembers = 0;
+    lines.forEach(line=>{
+      let delim = null;
+      if(line.includes(';')) delim = ';';
+      else if(line.includes('\t')) delim = '\t';
+      else if(line.includes(',')) delim = ',';
+      const parts = delim ? line.split(delim).map(p=>p.trim()) : [line.trim()];
+      const name = parts[0];
+      if(!name) return;
+      const key = name.toLowerCase();
+      if(existingNames.has(key)){ skipped++; return; }
+      existingNames.add(key);
+
+      const responsibleRaw = (parts[1]||'').trim();
+      let responsible = '';
+      if(responsibleRaw){
+        const match = config.teamMembers.find(m=>m.toLowerCase()===responsibleRaw.toLowerCase());
+        responsible = match || responsibleRaw;
+        if(!match){
+          config.teamMembers.push(responsible);
+          existingMembers.add(responsible.toLowerCase());
+          newMembers++;
+        }
+      }
+
+      const regimeRaw = (parts[2]||'').trim();
+      let taxRegime = '';
+      if(regimeRaw){
+        const match = TAX_REGIMES.find(r=>r.toLowerCase()===regimeRaw.toLowerCase());
+        taxRegime = match || regimeRaw;
+      }
+
+      config.clients.push({id: uid('cl'), name, taxRegime, responsible});
+      added++;
+    });
+    if(added>0){ await saveConfig(); render(); }
+    let msg = `Importação concluída: ${added} cliente(s) adicionado(s)`;
+    if(skipped>0) msg += `, ${skipped} ignorado(s) por já existir na lista`;
+    if(newMembers>0) msg += `. ${newMembers} nome(s) de responsável foram adicionados à equipe automaticamente — confira em Equipe`;
+    alert(msg + '.');
+    event.target.value = '';
+  };
+  reader.onerror = function(){
+    alert('Não foi possível ler o arquivo. Verifique se é um arquivo .txt válido.');
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+async function removeClient(id){
+  if(!confirm('Remover este cliente da lista? O histórico de meses já salvos não será apagado.')) return;
+  config.clients = config.clients.filter(c=>c.id!==id);
+  await saveConfig(); render();
+}
+async function addMember(name){
+  if(!name.trim()) return;
+  if(config.teamMembers.includes(name.trim())) return;
+  config.teamMembers.push(name.trim());
+  await saveConfig(); render();
+}
+async function removeMember(name){
+  config.teamMembers = config.teamMembers.filter(m=>m!==name);
+  await saveConfig(); render();
+}
+async function addChecklistItem(text){
+  if(!text.trim()) return;
+  config.checklistTemplate.push({text: text.trim(), guide: ''});
+  await saveConfig(); render();
+}
+async function removeChecklistItem(idx){
+  config.checklistTemplate.splice(idx,1);
+  await saveConfig(); render();
+}
+function normalizeTplItem(idx){
+  const t = config.checklistTemplate[idx];
+  if(typeof t === 'string'){ config.checklistTemplate[idx] = {text: t, guide: ''}; }
+}
+async function updateChecklistItemText(idx, value){
+  normalizeTplItem(idx);
+  config.checklistTemplate[idx].text = value;
+  await saveConfig();
+}
+async function updateChecklistItemGuide(idx, value){
+  normalizeTplItem(idx);
+  config.checklistTemplate[idx].guide = value;
+  await saveConfig();
+}
+async function updateOfficeName(name){
+  config.officeName = name;
+  await saveConfig();
+}
+
+/* ---------- render ---------- */
+function render(){
+  const app = document.getElementById('app');
+  if(loaded==='setup'){
+    app.innerHTML = `<div class="setup-screen">
+      <h2>Conectar o armazenamento</h2>
+      <p>Este sistema ainda não está conectado a um banco de dados. Para os dados ficarem salvos e visíveis para toda a equipe, siga os passos abaixo (leva uns 5 minutos, é gratuito).</p>
+      <div class="box">
+        <ol>
+          <li>Crie um projeto gratuito em <code>firebase.google.com</code> (console do Firebase).</li>
+          <li>No menu do projeto, ative o <b>Firestore Database</b> (crie o banco).</li>
+          <li>Nas configurações do projeto (ícone de engrenagem), crie um <b>App da Web</b> e copie o objeto <code>firebaseConfig</code>.</li>
+          <li>Abra este arquivo <code>fechamentos.html</code> num editor de texto, procure por <code>SUA_API_KEY_AQUI</code> e cole ali as suas chaves.</li>
+          <li>Salve o arquivo e publique-o (ex: arraste a pasta em <code>app.netlify.com/drop</code>) para gerar o link.</li>
+        </ol>
+      </div>
+    </div>`;
+    return;
+  }
+  if(loaded==='login'){
+    app.innerHTML = `<div class="setup-screen">
+      <h2>Entrar</h2>
+      <p>Informe o e-mail e a senha cadastrados para acessar os fechamentos do escritório.</p>
+      <div class="box login-box">
+        <div class="login-field">
+          <label>E-mail</label>
+          <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="username">
+        </div>
+        <div class="login-field">
+          <label>Senha</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') handleLogin()">
+        </div>
+        <div id="loginError" class="login-error"></div>
+        <button class="btn" id="loginBtn" onclick="handleLogin()" style="width:100%;margin-top:6px;">Entrar</button>
+      </div>
+    </div>`;
+    return;
+  }
+  if(!loaded){ app.innerHTML = '<div class="loading">Carregando dados do escritório…</div>'; return; }
+  const existingOverlay = document.querySelector('.overlay');
+  pendingScrollRestore = existingOverlay ? existingOverlay.scrollTop : 0;
+  document.querySelectorAll('.overlay').forEach(o=>o.remove());
+  const activeEl = document.activeElement;
+  const activeId = activeEl && activeEl.id ? activeEl.id : null;
+  const selStart = activeEl && typeof activeEl.selectionStart === 'number' ? activeEl.selectionStart : null;
+  const selEnd = activeEl && typeof activeEl.selectionEnd === 'number' ? activeEl.selectionEnd : null;
+
+  let html = '';
+  html += `<div class="topbar">
+    <div class="brand">
+      <h1>${escapeHtml(config.officeName)}</h1>
+      <div class="sub">Controle de fechamentos contábeis</div>
+    </div>
+    <div class="top-controls">
+      <button class="icon-btn" onclick="openConfig()" title="Configurações">⚙</button>
+      <button class="icon-btn" onclick="handleLogout()" title="Sair">⏻</button>
+    </div>
+  </div>`;
+
+  html += `<div class="month-nav">
+    <button class="icon-btn" onclick="goMonth(-1)">‹</button>
+    <div class="month-label">${monthLabel(currentMonthKey)}</div>
+    <button class="icon-btn" onclick="goMonth(1)">›</button>
+    <div class="who">
+      Sou: <select onchange="setUser(this.value)">
+        <option value="">Selecionar…</option>
+        ${config.teamMembers.map(m=>`<option value="${escapeHtml(m)}" ${m===currentUser?'selected':''}>${escapeHtml(m)}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
+
+  if(config.clients.length===0){
+    html += `<div class="ledger"><div class="empty-state">
+      <h3>Nenhum cliente cadastrado</h3>
+      <p>Abra as configurações (⚙) para cadastrar os clientes do escritório e a equipe.</p>
+      <button class="btn" onclick="openConfig()">Abrir configurações</button>
+    </div></div>`;
+  } else {
+    html += `<div class="filter-bar">
+      <input type="text" id="clientSearchInput" placeholder="Buscar cliente…" value="${escapeHtml(filterSearch)}" oninput="setFilterSearch(this.value)">
+      <select onchange="setFilterStatus(this.value)">
+        <option value="">Todos os status</option>
+        <option value="pendente" ${filterStatus==='pendente'?'selected':''}>Pendente</option>
+        <option value="em_conferencia" ${filterStatus==='em_conferencia'?'selected':''}>Em conferência</option>
+        <option value="revisao_final" ${filterStatus==='revisao_final'?'selected':''}>Revisão final</option>
+        <option value="concluido" ${filterStatus==='concluido'?'selected':''}>Concluído</option>
+      </select>
+      <select onchange="setFilterRegime(this.value)">
+        <option value="">Todas as tributações</option>
+        ${TAX_REGIMES.map(r=>`<option value="${r}" ${filterRegime===r?'selected':''}>${r}</option>`).join('')}
+        <option value="__none__" ${filterRegime==='__none__'?'selected':''}>Não informado</option>
+      </select>
+      <select onchange="setFilterResponsible(this.value)">
+        <option value="">Todos os responsáveis</option>
+        ${config.teamMembers.map(m=>`<option value="${escapeHtml(m)}" ${filterResponsible===m?'selected':''}>${escapeHtml(m)}</option>`).join('')}
+        <option value="__none__" ${filterResponsible==='__none__'?'selected':''}>Sem responsável</option>
+      </select>
+      <select onchange="setSortBy(this.value)">
+        <option value="name" ${sortBy==='name'?'selected':''}>Ordenar: Nome</option>
+        <option value="regime" ${sortBy==='regime'?'selected':''}>Ordenar: Tributação</option>
+        <option value="status" ${sortBy==='status'?'selected':''}>Ordenar: Status</option>
+      </select>
+      <div class="export-group">
+        <button class="btn ghost small" onclick="exportExcel()">Exportar Excel</button>
+        <button class="btn ghost small" onclick="printReport()">Imprimir / PDF</button>
+      </div>
+    </div>`;
+
+    const filteredList = getFilteredSortedClients();
+    html += `<div class="ledger">
+      <div class="ledger-head"><div>Cliente</div><div>Tributação</div><div>Progresso</div><div>Situação</div><div></div></div>`;
+    if(filteredList.length===0){
+      html += `<div class="empty-state"><h3>Nenhum cliente encontrado</h3><p>Ajuste a busca ou os filtros acima.</p></div>`;
+    } else {
+      filteredList.forEach(({cl,c})=>{
+        const p = pct(c);
+        const hasNotes = c.checklist.some(i=>i.note && i.note.trim());
+        const assignee = c.status==='pendente' ? (c.checklist.some(i=>i.done)? 'em andamento' : '') :
+                          c.status==='em_conferencia' ? ('executado por '+c.executor) :
+                          c.status==='revisao_final' ? ('conferido por '+c.conferente) :
+                          ('aprovado por '+c.aprovador);
+        html += `<div class="ledger-row" onclick="openDetail('${cl.id}')">
+          <div class="client-name">${escapeHtml(cl.name)}${cl.responsible?` <span class="responsible-tag">${escapeHtml(cl.responsible)}</span>`:''}${hasNotes?' <span class="note-flag" title="Há observações pendentes">📝</span>':''}${assignee?`<span class="assign">${escapeHtml(assignee)}</span>`:''}</div>
+          <div class="regime-cell ${cl.taxRegime?'':'empty'}">${escapeHtml(cl.taxRegime||'Não informado')}</div>
+          <div class="progress-wrap"><div class="progress-bar"><div style="width:${p}%"></div></div><div class="progress-pct">${p}%</div></div>
+          <div class="stamp-cell"><span class="stamp ${c.status}">${STAGE_LABELS[c.status]}</span></div>
+          <div class="chev">›</div>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+  }
+
+  app.innerHTML = html;
+
+  if(openClientId){ renderDetailModal(); }
+  if(showConfig){ renderConfigModal(); }
+
+  if(activeId){
+    const el = document.getElementById(activeId);
+    if(el){
+      el.focus();
+      if(selStart!==null && el.setSelectionRange){ try{ el.setSelectionRange(selStart, selEnd); }catch(e){} }
+    }
+  }
+}
+
+function renderDetailModal(){
+  const cl = config.clients.find(c=>c.id===openClientId);
+  if(!cl){ openClientId=null; return; }
+  const c = getClosing(cl.id);
+  const stageOrder = ['pendente','em_conferencia','revisao_final','concluido'];
+  const stageIdx = stageOrder.indexOf(c.status);
+
+  const trail = ['Fechamento','Conferência','Aprovação'].map((label,i)=>{
+    let cls = 'node';
+    if(i<stageIdx || c.status==='concluido' && i<3) cls += ' done';
+    if(i===stageIdx && c.status!=='concluido') cls += ' active';
+    if(i===2 && c.status==='concluido') cls += ' done';
+    return `<div class="${cls}">${label}</div>`;
+  }).join('');
+
+  function guideBlock(item){
+    if(!item.guide) return '';
+    return `<details class="guide"><summary>Como fazer</summary><p>${escapeHtml(item.guide)}</p></details>`;
+  }
+  function noteBlock(item, clientId, locked){
+    const val = escapeHtml(item.note||'');
+    return `<div class="note-field">
+      <label>Observação${item.note && item.note.trim() ? ' <span class="note-dot"></span>' : ''}</label>
+      <input type="text" value="${val}" placeholder="Ex.: falta nota fiscal do fornecedor X, aguardando envio…"
+        ${locked?'disabled':''} onchange="updateItemNote('${clientId}','${item.id}', this.value)">
+    </div>`;
+  }
+  const noteLocked = c.status==='concluido';
+  const allDone = c.checklist.every(i=>i.done);
+  const allConf = c.checklist.every(i=>i.confDone);
+
+  let selectAllRow = '';
+  if(c.status==='pendente'){
+    selectAllRow = `<label class="select-all-row">
+      <input type="checkbox" ${allDone?'checked':''} onchange="toggleAllItems('${cl.id}','done')">
+      <span>Marcar todos</span>
+    </label>`;
+  } else if(c.status==='em_conferencia'){
+    selectAllRow = `<label class="select-all-row">
+      <input type="checkbox" ${allConf?'checked':''} onchange="toggleAllItems('${cl.id}','confDone')">
+      <span>Marcar todos</span>
+    </label>`;
+  }
+
+  let checklistHtml = '';
+  if(c.status==='pendente'){
+    checklistHtml = c.checklist.map(item=>`
+      <li class="${item.done?'done':''}">
+        <input type="checkbox" ${item.done?'checked':''} onchange="toggleItem('${cl.id}','${item.id}','done')">
+        <div class="item-body"><span>${escapeHtml(item.text)}</span>${guideBlock(item)}${noteBlock(item, cl.id, noteLocked)}</div>
+      </li>`).join('');
+  } else if(c.status==='em_conferencia'){
+    checklistHtml = c.checklist.map(item=>`
+      <li class="${item.confDone?'done':''}">
+        <input type="checkbox" ${item.confDone?'checked':''} onchange="toggleItem('${cl.id}','${item.id}','confDone')">
+        <div class="item-body"><span>${escapeHtml(item.text)}</span>${guideBlock(item)}${noteBlock(item, cl.id, noteLocked)}</div>
+      </li>`).join('');
+  } else {
+    checklistHtml = c.checklist.map(item=>`
+      <li class="done">
+        <input type="checkbox" checked disabled>
+        <div class="item-body"><span>${escapeHtml(item.text)}</span>${guideBlock(item)}${noteBlock(item, cl.id, noteLocked)}</div>
+      </li>`).join('');
+  }
+
+  let actionButtons = '';
+  let hint = '';
+  if(c.status==='pendente'){
+    actionButtons = `<button class="btn" ${allDone?'':'disabled'} onclick="sendToConference('${cl.id}')">Enviar para conferência</button>`;
+    if(!allDone) hint = `<div class="hint">Marque todos os itens do checklist para liberar o envio à conferência.</div>`;
+  } else if(c.status==='em_conferencia'){
+    const sameUser = currentUser && currentUser===c.executor;
+    actionButtons = `<button class="btn ghost small" onclick="reopenClosing('${cl.id}')">Reabrir</button>
+      <button class="btn" ${allConf?'':'disabled'} onclick="approveConference('${cl.id}')">Aprovar conferência</button>`;
+    if(!allConf) hint = `<div class="hint">Marque os itens conferidos para liberar a aprovação.</div>`;
+    if(sameUser) hint += `<div class="hint warn">Atenção: você também foi quem realizou este fechamento. O ideal é que a conferência seja feita por outra pessoa.</div>`;
+  } else if(c.status==='revisao_final'){
+    actionButtons = `<button class="btn ghost small" onclick="reopenClosing('${cl.id}')">Reabrir</button>
+      <button class="btn" onclick="finalizeClosing('${cl.id}')">Finalizar fechamento</button>`;
+    hint = `<div class="hint">Revisão final antes de encerrar o mês para este cliente.</div>`;
+  } else {
+    actionButtons = `<button class="btn ghost small" onclick="reopenClosing('${cl.id}')">Reabrir fechamento</button>`;
+  }
+
+  const historyHtml = c.history.length ? `<div class="history"><div class="section-label">Histórico</div><ul>${
+    c.history.slice().reverse().map(h=>`<li>${h.t} — ${escapeHtml(h.what)} (${escapeHtml(h.who)})</li>`).join('')
+  }</ul></div>` : '';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.onclick = (e)=>{ if(e.target===overlay) closeDetail(); };
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>${escapeHtml(cl.name)}</h2>
+        <div class="meta">${monthLabel(currentMonthKey)}</div>
+      </div>
+      <button class="close-x" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="trail">${trail}</div>
+      <div class="section-label">Checklist</div>
+      ${selectAllRow}
+      <ul class="checklist">${checklistHtml}</ul>
+      ${hint}
+      <div class="section-label">Responsáveis</div>
+      <div class="signoffs">
+        <div class="signoff"><div class="role">Fechamento</div><div class="name ${!c.executor?'empty':''}">${c.executor?escapeHtml(c.executor):'—'}</div></div>
+        <div class="signoff"><div class="role">Conferência</div><div class="name ${!c.conferente?'empty':''}">${c.conferente?escapeHtml(c.conferente):'—'}</div></div>
+        <div class="signoff"><div class="role">Aprovação</div><div class="name ${!c.aprovador?'empty':''}">${c.aprovador?escapeHtml(c.aprovador):'—'}</div></div>
+      </div>
+      ${historyHtml}
+    </div>
+    <div class="modal-foot">${actionButtons}</div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.scrollTop = pendingScrollRestore;
+}
+
+function renderConfigModal(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.onclick = (e)=>{ if(e.target===overlay) closeConfig(); };
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-head">
+      <div><h2>Configurações</h2><div class="meta">Escritório, equipe e checklist</div></div>
+      <button class="close-x" onclick="closeConfig()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="cfg-block">
+        <h3>Nome do escritório</h3>
+        <input type="text" value="${escapeHtml(config.officeName)}" onchange="updateOfficeName(this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;">
+      </div>
+
+      <div class="cfg-block">
+        <h3>Equipe</h3>
+        <div class="cfg-list">
+          ${config.teamMembers.map(m=>`<div class="cfg-item"><input type="text" value="${escapeHtml(m)}" disabled><button class="del" onclick="removeMember('${escapeHtml(m).replace(/'/g,"\\'")}')">✕</button></div>`).join('') || '<div style="font-size:12.5px;color:var(--ink-soft);">Nenhum integrante ainda.</div>'}
+        </div>
+        <div class="add-row">
+          <input type="text" id="newMemberInput" placeholder="Nome do integrante">
+          <button class="btn small" onclick="submitNewMember()">Adicionar</button>
+        </div>
+      </div>
+
+      <div class="cfg-block">
+        <h3>Clientes</h3>
+        <div class="cfg-list">
+          ${config.clients.map(c=>`<div class="cfg-client-item">
+            <div class="cfg-item">
+              <input type="text" value="${escapeHtml(c.name)}" onchange="updateClientName('${c.id}', this.value)">
+              <button class="del" onclick="removeClient('${c.id}')">✕</button>
+            </div>
+            <div class="cfg-client-selects">
+              <select onchange="updateClientRegime('${c.id}', this.value)">
+                <option value="" ${!c.taxRegime?'selected':''}>Tributação…</option>
+                ${TAX_REGIMES.map(r=>`<option value="${r}" ${c.taxRegime===r?'selected':''}>${r}</option>`).join('')}
+              </select>
+              <select onchange="updateClientResponsible('${c.id}', this.value)">
+                <option value="" ${!c.responsible?'selected':''}>Responsável…</option>
+                ${config.teamMembers.map(m=>`<option value="${escapeHtml(m)}" ${c.responsible===m?'selected':''}>${escapeHtml(m)}</option>`).join('')}
+              </select>
+            </div>
+          </div>`).join('') || '<div style="font-size:12.5px;color:var(--ink-soft);">Nenhum cliente ainda.</div>'}
+        </div>
+        <div class="add-row">
+          <input type="text" id="newClientInput" placeholder="Nome do cliente">
+          <button class="btn small" onclick="submitNewClient()">Adicionar</button>
+        </div>
+        <div class="import-row">
+          <input type="file" id="importClientsFile" accept=".txt,text/plain" style="display:none" onchange="handleImportClientsFile(event)">
+          <button class="btn ghost small" onclick="document.getElementById('importClientsFile').click()">Importar lista (.txt)</button>
+          <span class="hint-inline">uma empresa por linha: Nome;Responsável;Tributação</span>
+        </div>
+      </div>
+
+      <div class="cfg-block">
+        <h3>Checklist padrão de fechamento</h3>
+        <div class="cfg-list">
+          ${config.checklistTemplate.map((t,i)=>{
+            const text = typeof t === 'string' ? t : t.text;
+            const guide = typeof t === 'string' ? '' : (t.guide||'');
+            return `<div class="cfg-tpl-item">
+              <div class="cfg-item">
+                <input type="text" value="${escapeHtml(text)}" onchange="updateChecklistItemText(${i}, this.value)">
+                <button class="del" onclick="removeChecklistItem(${i})">✕</button>
+              </div>
+              <details class="guide-edit">
+                <summary>Passo a passo (${guide ? 'editar' : 'adicionar'})</summary>
+                <textarea rows="3" placeholder="Explique como conferir este item, com os caminhos de menu do sistema…" onchange="updateChecklistItemGuide(${i}, this.value)">${escapeHtml(guide)}</textarea>
+              </details>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="add-row">
+          <input type="text" id="newItemInput" placeholder="Novo item do checklist">
+          <button class="btn small" onclick="submitNewItem()">Adicionar</button>
+        </div>
+        <div class="hint" style="margin-top:10px;">Alterações no checklist valem para novos meses. Meses já iniciados mantêm o checklist original.</div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeConfig()">Concluído</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.scrollTop = pendingScrollRestore;
+}
+
+function submitNewMember(){
+  const el = document.getElementById('newMemberInput');
+  addMember(el.value); 
+}
+function submitNewClient(){
+  const el = document.getElementById('newClientInput');
+  addClient(el.value);
+}
+function submitNewItem(){
+  const el = document.getElementById('newItemInput');
+  addChecklistItem(el.value);
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function goMonth(delta){
+  currentMonthKey = shiftMonth(currentMonthKey, delta);
+  await loadMonth(currentMonthKey);
+  render();
+}
+function setUser(name){ currentUser = name; render(); }
+function openDetail(id){ openClientId = id; render(); }
+function closeDetail(){ openClientId = null; render(); }
+function openConfig(){ showConfig = true; render(); }
+function closeConfig(){ showConfig = false; render(); }
+
+boot();
+</script>
+</body>
+</html>
