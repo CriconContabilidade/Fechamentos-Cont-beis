@@ -636,6 +636,10 @@ async function sendToConference(clientId){
   c.status='em_conferencia'; c.executor=currentUser; c.executedAt=nowStr();
   c.history.push({t:nowStr(), who:currentUser, what:'Enviou para conferência'});
   await saveMonth(); render();
+  if(confirm('Aplicar esse fechamento também aos meses anteriores em aberto deste cliente (enviando-os para conferência)?')){
+    const n = await cascadePreviousMonths(clientId, 'em_conferencia');
+    alert(n>0 ? `${n} mês(es) anterior(es) atualizado(s) para "Em conferência".` : 'Não havia meses anteriores pendentes para atualizar.');
+  }
 }
 async function approveConference(clientId){
   const c = getClosing(clientId);
