@@ -81,6 +81,7 @@ select{
   min-width:150px;text-align:center;text-transform:capitalize;
 }
 .who{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);}
+.who-email{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);}
 
 /* ledger table */
 .ledger{
@@ -499,6 +500,11 @@ async function loadAll(){
   if(!config){
     config = { officeName: "Meu Escritório Contábil", teamMembers: [], clients: [], checklistTemplate: DEFAULT_CHECKLIST.slice() };
   }
+  if(!config.memberEmails) config.memberEmails = {};
+  const emailKey = (window.__fbUser && window.__fbUser.email) ? window.__fbUser.email.toLowerCase() : null;
+  if(emailKey && config.memberEmails[emailKey] && config.teamMembers.includes(config.memberEmails[emailKey])){
+    currentUser = config.memberEmails[emailKey];
+  }
   await loadMonth(currentMonthKey);
   loaded = true;
   render();
@@ -882,6 +888,7 @@ function render(){
         <option value="">Selecionar…</option>
         ${config.teamMembers.map(m=>`<option value="${escapeHtml(m)}" ${m===currentUser?'selected':''}>${escapeHtml(m)}</option>`).join('')}
       </select>
+      ${window.__fbUser ? `<span class="who-email">${currentUser?'✓ identificado por ':'defina 1x para '}${escapeHtml(window.__fbUser.email)}</span>` : ''}
     </div>
   </div>`;
 
@@ -1190,7 +1197,15 @@ async function goMonth(delta){
   await loadMonth(currentMonthKey);
   render();
 }
-function setUser(name){ currentUser = name; render(); }
+async function setUser(name){
+  currentUser = name;
+  if(window.__fbUser && window.__fbUser.email && name){
+    if(!config.memberEmails) config.memberEmails = {};
+    config.memberEmails[window.__fbUser.email.toLowerCase()] = name;
+    await saveConfig();
+  }
+  render();
+}
 function openDetail(id){ openClientId = id; render(); }
 function closeDetail(){ openClientId = null; render(); }
 function openConfig(){ showConfig = true; render(); }
