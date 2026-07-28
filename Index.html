@@ -176,6 +176,10 @@ select{
   border-bottom:1px dashed var(--rule-strong);
 }
 .select-all-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--ink);cursor:pointer;}
+.cascade-toggle{
+  display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);cursor:pointer;margin-right:auto;
+}
+.cascade-toggle input[type=checkbox]{width:15px;height:15px;accent-color:var(--ink);cursor:pointer;}
 .checklist li{
   display:flex;align-items:flex-start;gap:10px;padding:11px 2px;border-bottom:1px solid var(--rule);font-size:13.5px;
 }
@@ -425,6 +429,8 @@ let filterStatus = "";
 let filterRegime = "";
 let filterResponsible = "";
 let sortBy = "name";
+let cascadeEnabled = false;
+function setCascadeEnabled(checked){ cascadeEnabled = checked; }
 
 function monthKeyFromDate(d){
   return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
@@ -570,8 +576,8 @@ async function toggleItem(clientId, itemId, field){
   const item = c.checklist.find(i=>i.id===itemId);
   if(!item) return;
   item[field] = !item[field];
-  await saveMonth();
   render();
+  saveMonth();
 }
 
 async function updateItemNote(clientId, itemId, value){
@@ -579,8 +585,8 @@ async function updateItemNote(clientId, itemId, value){
   const item = c.checklist.find(i=>i.id===itemId);
   if(!item) return;
   item.note = value;
-  await saveMonth();
   render();
+  saveMonth();
 }
 
 async function toggleAllItems(clientId, field){
@@ -588,8 +594,8 @@ async function toggleAllItems(clientId, field){
   const c = getClosing(clientId);
   const allMarked = c.checklist.every(i=>i[field]);
   c.checklist.forEach(i=>{ i[field] = !allMarked; });
-  await saveMonth();
   render();
+  saveMonth();
 }
 
 const STATUS_ORDER = {pendente:0, em_conferencia:1, revisao_final:2, concluido:3};
@@ -635,33 +641,24 @@ async function sendToConference(clientId){
   if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
   c.status='em_conferencia'; c.executor=currentUser; c.executedAt=nowStr();
   c.history.push({t:nowStr(), who:currentUser, what:'Enviou para conferência'});
-  await saveMonth(); render();
-  if(confirm('Aplicar esse fechamento também aos meses anteriores em aberto deste cliente (enviando-os para conferência)?')){
-    const n = await cascadePreviousMonths(clientId, 'em_conferencia');
-    alert(n>0 ? `${n} mês(es) anterior(es) atualizado(s) para "Em conferência".` : 'Não havia meses anteriores pendentes para atualizar.');
-  }
+  render(); saveMonth();
+  if(cascadeEnabled){ cascadePreviousMonths(clientId, 'em_conferencia'); }
 }
 async function approveConference(clientId){
   const c = getClosing(clientId);
   if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
   c.status='revisao_final'; c.conferente=currentUser; c.conferidoAt=nowStr();
   c.history.push({t:nowStr(), who:currentUser, what:'Aprovou a conferência'});
-  await saveMonth(); render();
-  if(confirm('Aplicar essa aprovação de conferência também aos meses anteriores em aberto deste cliente?')){
-    const n = await cascadePreviousMonths(clientId, 'revisao_final');
-    alert(n>0 ? `${n} mês(es) anterior(es) atualizado(s) para "Revisão final".` : 'Não havia meses anteriores pendentes para atualizar.');
-  }
+  render(); saveMonth();
+  if(cascadeEnabled){ cascadePreviousMonths(clientId, 'revisao_final'); }
 }
 async function finalizeClosing(clientId){
   const c = getClosing(clientId);
   if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
   c.status='concluido'; c.aprovador=currentUser; c.finalizadoAt=nowStr();
   c.history.push({t:nowStr(), who:currentUser, what:'Finalizou o fechamento'});
-  await saveMonth(); render();
-  if(confirm('Marcar também como concluídos os meses anteriores em aberto deste cliente?')){
-    const n = await cascadePreviousMonths(clientId, 'concluido');
-    alert(n>0 ? `${n} mês(es) anterior(es) marcado(s) como concluído.` : 'Não havia meses anteriores pendentes para fechar.');
-  }
+  render(); saveMonth();
+  if(cascadeEnabled){ cascadePreviousMonths(clientId, 'concluido'); }
 }
 async function reopenClosing(clientId){
   if(!confirm('Reabrir este fechamento? Os itens marcados voltarão a ficar pendentes.')) return;
@@ -669,13 +666,13 @@ async function reopenClosing(clientId){
   c.status='pendente';
   c.checklist.forEach(i=>{i.done=false; i.confDone=false;});
   c.history.push({t:nowStr(), who:currentUser||'—', what:'Reabriu o fechamento'});
-  await saveMonth(); render();
+  render(); saveMonth();
 }
 
 async function addClient(name){
   if(!name.trim()) return;
   config.clients.push({id: uid('cl'), name: name.trim(), taxRegime: '', responsible: ''});
-  await saveConfig(); render();
+  render(); saveConfig();
 }
 async function updateClientName(id, value){
   const cl = config.clients.find(c=>c.id===id);
@@ -687,13 +684,13 @@ async function updateClientRegime(id, value){
   const cl = config.clients.find(c=>c.id===id);
   if(!cl) return;
   cl.taxRegime = value;
-  await saveConfig(); render();
+  render(); saveConfig();
 }
 async function updateClientResponsible(id, value){
   const cl = config.clients.find(c=>c.id===id);
   if(!cl) return;
   cl.responsible = value;
-  await saveConfig(); render();
+  render(); saveConfig();
 }
 function setFilterSearch(value){ filterSearch = value; render(); }
 function setFilterStatus(value){ filterStatus = value; render(); }
@@ -815,7 +812,7 @@ function handleImportClientsFile(event){
       config.clients.push({id: uid('cl'), name, taxRegime, responsible});
       added++;
     });
-    if(added>0){ await saveConfig(); render(); }
+    if(added>0){ render(); saveConfig(); }
     let msg = `Importação concluída: ${added} cliente(s) adicionado(s)`;
     if(skipped>0) msg += `, ${skipped} ignorado(s) por já existir na lista`;
     if(newMembers>0) msg += `. ${newMembers} nome(s) de responsável foram adicionados à equipe automaticamente — confira em Equipe`;
@@ -830,26 +827,26 @@ function handleImportClientsFile(event){
 async function removeClient(id){
   if(!confirm('Remover este cliente da lista? O histórico de meses já salvos não será apagado.')) return;
   config.clients = config.clients.filter(c=>c.id!==id);
-  await saveConfig(); render();
+  render(); saveConfig();
 }
 async function addMember(name){
   if(!name.trim()) return;
   if(config.teamMembers.includes(name.trim())) return;
   config.teamMembers.push(name.trim());
-  await saveConfig(); render();
+  render(); saveConfig();
 }
 async function removeMember(name){
   config.teamMembers = config.teamMembers.filter(m=>m!==name);
-  await saveConfig(); render();
+  render(); saveConfig();
 }
 async function addChecklistItem(text){
   if(!text.trim()) return;
   config.checklistTemplate.push({text: text.trim(), guide: ''});
-  await saveConfig(); render();
+  render(); saveConfig();
 }
 async function removeChecklistItem(idx){
   config.checklistTemplate.splice(idx,1);
-  await saveConfig(); render();
+  render(); saveConfig();
 }
 function normalizeTplItem(idx){
   const t = config.checklistTemplate[idx];
@@ -1102,6 +1099,11 @@ function renderDetailModal(){
     actionButtons = `<button class="btn ghost small" onclick="reopenClosing('${cl.id}')">Reabrir fechamento</button>`;
   }
 
+  const cascadeCheckbox = (c.status!=='concluido') ? `<label class="cascade-toggle">
+    <input type="checkbox" ${cascadeEnabled?'checked':''} onchange="setCascadeEnabled(this.checked)">
+    <span>Aplicar também aos meses anteriores em aberto</span>
+  </label>` : '';
+
   const historyHtml = c.history.length ? `<div class="history"><div class="section-label">Histórico</div><ul>${
     c.history.slice().reverse().map(h=>`<li>${h.t} — ${escapeHtml(h.what)} (${escapeHtml(h.who)})</li>`).join('')
   }</ul></div>` : '';
@@ -1131,7 +1133,7 @@ function renderDetailModal(){
       </div>
       ${historyHtml}
     </div>
-    <div class="modal-foot">${actionButtons}</div>
+    <div class="modal-foot">${cascadeCheckbox}${actionButtons}</div>
   </div>`;
   document.body.appendChild(overlay);
   overlay.scrollTop = pendingScrollRestore;
@@ -1252,7 +1254,7 @@ async function setUser(name){
   if(window.__fbUser && window.__fbUser.email && name){
     if(!config.memberEmails) config.memberEmails = {};
     config.memberEmails[window.__fbUser.email.toLowerCase()] = name;
-    await saveConfig();
+    saveConfig();
   }
   render();
 }
