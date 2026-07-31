@@ -312,7 +312,7 @@ details.guide p{
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   // ============================================================
@@ -347,6 +347,16 @@ details.guide p{
       };
       window.__fbSet = async function(key, jsonStr){
         await setDoc(doc(db, COLLECTION, key), { json: jsonStr, updatedAt: Date.now() });
+      };
+      window.__fbListMonthDocs = async function(){
+        const snap = await getDocs(collection(db, COLLECTION));
+        const result = {};
+        snap.forEach(d=>{
+          if(d.id.startsWith('month:')){
+            result[d.id.slice(6)] = d.data().json;
+          }
+        });
+        return result;
       };
       window.__fbSignIn = async function(email, password){
         try{
@@ -724,48 +734,190 @@ function getFilteredSortedClients(){
   return list;
 }
 
-function exportExcel(){
-  if(typeof XLSX==='undefined'){ alert('Não foi possível carregar o gerador de Excel. Verifique sua conexão com a internet e tente novamente.'); return; }
-  const list = getFilteredSortedClients();
-  const rows = list.map(({cl,c})=>({
-    'Cliente': cl.name,
-    'Responsável': cl.responsible || '',
-    'Tributação': cl.taxRegime || 'Não informado',
-    'Status': STAGE_LABELS[c.status],
-    'Progresso': pct(c) + '%',
-    'Fechado por': c.executor || '',
-    'Conferido por': c.conferente || '',
-    'Aprovado por': c.aprovador || ''
-  }));
-  if(rows.length===0){ alert('Não há clientes para exportar com os filtros atuais.'); return; }
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Fechamentos');
-  XLSX.writeFile(wb, `fechamentos_${currentMonthKey}.xlsx`);
+function monthKeyToShort(key){
+  if(!key) return '—';
+  const [y,m] = key.split('-');
+  return `${m}/${y.slice(2)}`;
 }
 
-function printReport(){
+const MONTH_ABBR = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function monthKeyToAbbr(key){
+  const [y,m] = key.split('-').map(Number);
+  return `${MONTH_ABBR[m-1]}/${String(y).slice(2)}`;
+}
+
+function buildPeriodSummary(list, timelines){
+  const allKeys = [];
+  list.forEach(({cl})=>{
+    const t = timelines[cl.id] || {};
+    if(t.fechadoAte) allKeys.push(t.fechadoAte);
+    if(t.conferidoAte) allKeys.push(t.conferidoAte);
+  });
+  const startKey = allKeys.length ? allKeys.slice().sort()[0] : currentMonthKey;
+  const endKey = shiftMonth(currentMonthKey, 6);
+  const periods = [];
+  let k = startKey, guard = 0;
+  while(k <= endKey && guard < 60){ periods.push(k); k = shiftMonth(k,1); guard++; }
+
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30);
+
+  return periods.map(pk=>{
+    const [y,m] = pk.split('-').map(Number);
+    const periodDate = new Date(y, m-1, 1);
+    const fechadoCount = list.filter(({cl})=>(timelines[cl.id]||{}).fechadoAte===pk).length;
+    const conferidoCount = list.filter(({cl})=>(timelines[cl.id]||{}).conferidoAte===pk).length;
+    const fechadoLabel = (periodDate < cutoff) ? (fechadoCount===0 ? 'Em dia' : fechadoCount) : 'Fechado';
+    return { period: pk, fechadoLabel, conferidoCount };
+  });
+}
+
+async function computeClientTimelines(){
+  let allMonths = {};
+  try{
+    allMonths = await window.__fbListMonthDocs();
+  }catch(e){
+    console.error('Erro ao buscar histórico de meses', e);
+    return {};
+  }
+  const monthKeys = Object.keys(allMonths).sort();
+  const timelines = {};
+  config.clients.forEach(cl=>{ timelines[cl.id] = { fechadoAte:null, conferidoAte:null }; });
+  monthKeys.forEach(mk=>{
+    let data = {};
+    try{ data = allMonths[mk] ? JSON.parse(allMonths[mk]) : {}; }catch(e){ data = {}; }
+    Object.keys(data).forEach(clientId=>{
+      if(!timelines[clientId]) return;
+      const entry = data[clientId];
+      if(entry.status==='concluido'){
+        timelines[clientId].fechadoAte = mk;
+        timelines[clientId].conferidoAte = mk;
+      }else if(entry.status==='revisao_final'){
+        timelines[clientId].conferidoAte = mk;
+      }
+    });
+  });
+  return timelines;
+}
+
+function buildResponsibleSummary(list, timelines){
+  const byResp = {};
+  list.forEach(({cl})=>{
+    const key = cl.responsible || 'Sem responsável';
+    if(!byResp[key]) byResp[key] = { total:0, emDiaFechado:0, emDiaConferido:0 };
+    byResp[key].total++;
+    const t = timelines[cl.id] || {};
+    if(t.fechadoAte === currentMonthKey) byResp[key].emDiaFechado++;
+    if(t.conferidoAte === currentMonthKey) byResp[key].emDiaConferido++;
+  });
+  return Object.keys(byResp).sort().map(name=>({ name, ...byResp[name] }));
+}
+
+async function exportExcel(event){
+  if(typeof XLSX==='undefined'){ alert('Não foi possível carregar o gerador de Excel. Verifique sua conexão com a internet e tente novamente.'); return; }
+  const list = getFilteredSortedClients();
+  if(list.length===0){ alert('Não há clientes para exportar com os filtros atuais.'); return; }
+  const btn = event ? event.target : null;
+  const origText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Gerando…'; }
+
+  const timelines = await computeClientTimelines();
+
+  const rows = list.map(({cl,c})=>{
+    const t = timelines[cl.id] || {};
+    return {
+      'Responsável': cl.responsible || 'Sem responsável',
+      'Tributação': cl.taxRegime || 'Não informado',
+      'Cliente': cl.name,
+      'Fechado até': monthKeyToShort(t.fechadoAte),
+      'Conferido até': monthKeyToShort(t.conferidoAte),
+      'Status (mês atual)': STAGE_LABELS[c.status],
+      'Progresso (mês atual)': pct(c) + '%'
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Empresas');
+
+  const summary = buildResponsibleSummary(list, timelines);
+  const summaryRows = summary.map(s=>({
+    'Responsável': s.name,
+    'Total de empresas': s.total,
+    [`Em dia (fechado) — ${monthLabel(currentMonthKey)}`]: s.emDiaFechado,
+    [`Em dia (conferido) — ${monthLabel(currentMonthKey)}`]: s.emDiaConferido
+  }));
+  const ws2 = XLSX.utils.json_to_sheet(summaryRows);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Por Responsável');
+
+  const periodSummary = buildPeriodSummary(list, timelines);
+  const periodRows = periodSummary.map(p=>({
+    'Período': monthKeyToAbbr(p.period),
+    'Empresas Fechadas até': p.fechadoLabel,
+    'Empresas Conferidas até': p.conferidoCount
+  }));
+  const ws3 = XLSX.utils.json_to_sheet(periodRows);
+  XLSX.utils.book_append_sheet(wb, ws3, 'Por Período');
+
+  XLSX.writeFile(wb, `fechamentos_${currentMonthKey}.xlsx`);
+  if(btn){ btn.disabled = false; btn.textContent = origText; }
+}
+
+async function printReport(event){
   const list = getFilteredSortedClients();
   if(list.length===0){ alert('Não há clientes para gerar o relatório com os filtros atuais.'); return; }
-  const rows = list.map(({cl,c})=>`
+  const btn = event ? event.target : null;
+  const origText = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Gerando…'; }
+
+  const timelines = await computeClientTimelines();
+
+  const rows = list.map(({cl,c})=>{
+    const t = timelines[cl.id] || {};
+    return `
     <tr>
-      <td>${escapeHtml(cl.name)}</td>
       <td>${escapeHtml(cl.responsible||'—')}</td>
       <td>${escapeHtml(cl.taxRegime||'—')}</td>
-      <td>${STAGE_LABELS[c.status]}</td>
-      <td>${pct(c)}%</td>
-      <td>${escapeHtml(c.executor||'—')}</td>
-      <td>${escapeHtml(c.conferente||'—')}</td>
-      <td>${escapeHtml(c.aprovador||'—')}</td>
+      <td>${escapeHtml(cl.name)}</td>
+      <td>${monthKeyToShort(t.fechadoAte)}</td>
+      <td>${monthKeyToShort(t.conferidoAte)}</td>
+    </tr>`;
+  }).join('');
+
+  const summary = buildResponsibleSummary(list, timelines);
+  const summaryRows = summary.map(s=>`
+    <tr>
+      <td>${escapeHtml(s.name)}</td>
+      <td>${s.total}</td>
+      <td>${s.emDiaFechado}</td>
+      <td>${s.emDiaConferido}</td>
     </tr>`).join('');
+
+  const periodSummary = buildPeriodSummary(list, timelines);
+  const periodRowsHtml = periodSummary.map(p=>`
+    <tr>
+      <td>${monthKeyToAbbr(p.period)}</td>
+      <td>${p.fechadoLabel}</td>
+      <td>${p.conferidoCount}</td>
+    </tr>`).join('');
+
   const el = document.getElementById('printReport');
   el.innerHTML = `
     <h1>${escapeHtml(config.officeName)}</h1>
-    <h2>Relatório de fechamentos — ${monthLabel(currentMonthKey)} · gerado em ${nowStr()}</h2>
+    <h2>Relatório de fechamentos · gerado em ${nowStr()}</h2>
     <table>
-      <thead><tr><th>Cliente</th><th>Responsável</th><th>Tributação</th><th>Status</th><th>Progresso</th><th>Fechado por</th><th>Conferido por</th><th>Aprovado por</th></tr></thead>
+      <thead><tr><th>Responsável</th><th>Tributação</th><th>Empresas</th><th>Fechado até</th><th>Conferido até</th></tr></thead>
       <tbody>${rows}</tbody>
+    </table>
+    <h2 style="margin-top:18px;">Resumo por responsável</h2>
+    <table>
+      <thead><tr><th>Responsável</th><th>Total de empresas</th><th>Em dia (fechado) — ${escapeHtml(monthLabel(currentMonthKey))}</th><th>Em dia (conferido) — ${escapeHtml(monthLabel(currentMonthKey))}</th></tr></thead>
+      <tbody>${summaryRows}</tbody>
+    </table>
+    <h2 style="margin-top:18px;">Painel por período</h2>
+    <table>
+      <thead><tr><th>Período</th><th>Empresas Fechadas até</th><th>Empresas Conferidas até</th></tr></thead>
+      <tbody>${periodRowsHtml}</tbody>
     </table>`;
+  if(btn){ btn.disabled = false; btn.textContent = origText; }
   window.print();
 }
 function handleImportClientsFile(event){
@@ -971,8 +1123,8 @@ function render(){
         <option value="status" ${sortBy==='status'?'selected':''}>Ordenar: Status</option>
       </select>
       <div class="export-group">
-        <button class="btn ghost small" onclick="exportExcel()">Exportar Excel</button>
-        <button class="btn ghost small" onclick="printReport()">Imprimir / PDF</button>
+        <button class="btn ghost small" onclick="exportExcel(event)">Exportar Excel</button>
+        <button class="btn ghost small" onclick="printReport(event)">Imprimir / PDF</button>
       </div>
     </div>`;
 
