@@ -259,6 +259,9 @@ details.guide p{
   #printReport th{background:#eee;}
   #printReport .print-footer{margin-top:12px;font-size:9.5px;color:#777;}
 }
+.cfg-filter-row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.cfg-filter-row input{flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;}
+.cfg-filter-row select{padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;background:var(--paper-raised);font-size:12.5px;}
 .add-row{display:flex;gap:8px;}
 .add-row input{flex:1;padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;}
 .import-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
@@ -444,6 +447,8 @@ let filterStatus = "";
 let filterRegime = "";
 let filterResponsible = "";
 let sortBy = "name";
+let cfgClientSearch = "";
+let cfgClientSort = "name";
 let cascadeEnabled = false;
 function setCascadeEnabled(checked){ cascadeEnabled = checked; }
 
@@ -712,6 +717,28 @@ function setFilterStatus(value){ filterStatus = value; render(); }
 function setFilterRegime(value){ filterRegime = value; render(); }
 function setFilterResponsible(value){ filterResponsible = value; render(); }
 function setSortBy(value){ sortBy = value; render(); }
+function setCfgClientSearch(value){ cfgClientSearch = value; render(); }
+function setCfgClientSort(value){ cfgClientSort = value; render(); }
+
+function getCfgClients(){
+  let list = config.clients.slice();
+  const q = cfgClientSearch.trim().toLowerCase();
+  if(q){
+    list = list.filter(c=>
+      c.name.toLowerCase().includes(q) ||
+      (c.taxRegime||'').toLowerCase().includes(q) ||
+      (c.responsible||'').toLowerCase().includes(q)
+    );
+  }
+  const byName = (a,b)=> a.name.localeCompare(b.name);
+  list.sort((a,b)=>{
+    if(cfgClientSort==='name_desc') return byName(b,a);
+    if(cfgClientSort==='regime') return (a.taxRegime||'￿').localeCompare(b.taxRegime||'￿') || byName(a,b);
+    if(cfgClientSort==='responsible') return (a.responsible||'￿').localeCompare(b.responsible||'￿') || byName(a,b);
+    return byName(a,b);
+  });
+  return list;
+}
 
 function getFilteredSortedClients(){
   let list = config.clients.map(cl=>({ cl, c: getClosing(cl.id) }));
@@ -1328,8 +1355,18 @@ function renderConfigModal(){
 
       <div class="cfg-block">
         <h3>Clientes</h3>
+        <div class="cfg-filter-row">
+          <input type="text" id="cfgClientSearchInput" placeholder="Buscar por nome, tributação ou responsável…" value="${escapeHtml(cfgClientSearch)}" oninput="setCfgClientSearch(this.value)">
+          <select onchange="setCfgClientSort(this.value)">
+            <option value="name" ${cfgClientSort==='name'?'selected':''}>Ordenar: Nome (A–Z)</option>
+            <option value="name_desc" ${cfgClientSort==='name_desc'?'selected':''}>Ordenar: Nome (Z–A)</option>
+            <option value="regime" ${cfgClientSort==='regime'?'selected':''}>Ordenar: Tributação</option>
+            <option value="responsible" ${cfgClientSort==='responsible'?'selected':''}>Ordenar: Responsável</option>
+          </select>
+        </div>
+        <div class="hint" style="margin-bottom:8px;">${getCfgClients().length} de ${config.clients.length} cliente(s)</div>
         <div class="cfg-list">
-          ${config.clients.map(c=>`<div class="cfg-client-item">
+          ${getCfgClients().map(c=>`<div class="cfg-client-item">
             <div class="cfg-item">
               <input type="text" value="${escapeHtml(c.name)}" onchange="updateClientName('${c.id}', this.value)">
               <button class="del" onclick="removeClient('${c.id}')">✕</button>
@@ -1344,7 +1381,7 @@ function renderConfigModal(){
                 ${config.teamMembers.map(m=>`<option value="${escapeHtml(m)}" ${c.responsible===m?'selected':''}>${escapeHtml(m)}</option>`).join('')}
               </select>
             </div>
-          </div>`).join('') || '<div style="font-size:12.5px;color:var(--ink-soft);">Nenhum cliente ainda.</div>'}
+          </div>`).join('') || `<div style="font-size:12.5px;color:var(--ink-soft);">${config.clients.length ? 'Nenhum cliente encontrado.' : 'Nenhum cliente ainda.'}</div>`}
         </div>
         <div class="add-row">
           <input type="text" id="newClientInput" placeholder="Nome do cliente">
