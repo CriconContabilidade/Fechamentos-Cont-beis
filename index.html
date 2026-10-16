@@ -7,24 +7,24 @@
   window.__fbReady = new Promise(resolve => { window.__fbReadyResolve = resolve; });
 </script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Orbitron:wght@700;800&display=swap');
 
 :root{
-  --ink:#1A1A1A;
-  --ink-soft:#65656B;
-  --paper:#E7E6E2;
-  --paper-raised:#FFFFFF;
-  --rule:#D6D5D1;
-  --rule-strong:#A9A7A2;
-  --red:#A6392C;
-  --red-bg:#F6E1DC;
-  --amber:#8A6400;
-  --amber-bg:#FCEEA9;
-  --blue:#333333;
-  --blue-bg:#C8C7C3;
-  --green:#FFFFFF;
-  --green-bg:#161616;
-  --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.06);
+  --ink:#e8edfb;
+  --ink-soft:#8992b8;
+  --paper:rgba(255,255,255,0.04);
+  --paper-raised:rgba(180,200,255,0.05);
+  --rule:rgba(160,180,255,0.10);
+  --rule-strong:rgba(160,180,255,0.25);
+  --red:#f87171;
+  --red-bg:rgba(248,113,113,0.15);
+  --amber:#f2c14e;
+  --amber-bg:rgba(242,193,78,0.15);
+  --blue:#38bdf8;
+  --blue-bg:rgba(56,189,248,0.15);
+  --green:#34d399;
+  --green-bg:rgba(52,211,153,0.15);
+  --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 4px 14px rgba(0,0,0,0.2);
 }
 *{box-sizing:border-box;}
 body{
@@ -319,9 +319,155 @@ details.guide p{
   .who{margin-left:0;width:100%;}
   .filter-bar .export-group{margin-left:0;width:100%;}
 }
+
+/* ===== Visual escuro (layout Stagiario) ===== */
+:root{color-scheme:dark;--accent1:#4f6bff;--accent2:#38bdf8;--accent-grad:linear-gradient(135deg,#4f6bff,#38bdf8);--panel:rgba(180,200,255,.05);--panel-border:rgba(160,180,255,.1);}
+body{background:#060a18;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 70% at 30% -10%,rgba(79,107,255,.22),transparent 60%),radial-gradient(ellipse 70% 60% at 100% 100%,rgba(56,189,248,.14),transparent 60%),radial-gradient(ellipse 100% 80% at 50% 50%,#0a1230 0%,#02040c 70%);}
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;background-size:340px 340px;background-image:radial-gradient(1px 1px at 15% 25%,#cfe0ff 100%,transparent),radial-gradient(1px 1px at 65% 8%,#fff 100%,transparent),radial-gradient(1px 1px at 40% 60%,#b9c9ff 100%,transparent),radial-gradient(1px 1px at 85% 45%,#fff 100%,transparent),radial-gradient(1px 1px at 10% 80%,#cfe0ff 100%,transparent);}
+.app{position:relative;z-index:1;max-width:1100px;}
+select,input[type=text],input[type=email],input[type=password],textarea{color:var(--ink);}
+select{background:rgba(255,255,255,.04);border:1px solid var(--panel-border);border-radius:10px;font-weight:400;}
+select option{background:#0b0f1e;color:#e8edfb;}
+.btn{background:var(--accent-grad);border:none;border-radius:10px;color:#fff;}
+.btn.ghost{background:none;border:1px solid var(--panel-border);color:var(--ink-soft);}
+.btn.ghost:hover{background:rgba(255,255,255,.05);color:var(--ink);}
+.icon-btn{border:1px solid var(--panel-border);background:var(--panel);color:var(--ink-soft);border-radius:10px;width:36px;height:36px;}
+.icon-btn:hover{background:rgba(255,255,255,.07);border-color:var(--accent2);}
+.pill{background:var(--panel);border:1px solid var(--panel-border);color:var(--ink-soft);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;}
+.pill:hover{border-color:var(--accent2);color:var(--ink);}
+.pill.rank{background:var(--accent-grad);border-color:transparent;color:#fff;font-weight:700;}
+
+.topbar{border-bottom:1px solid var(--panel-border);}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand .orb{width:44px;height:44px;border-radius:50%;background:#f4efe9;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.brand .orb svg{width:27px;height:auto;}
+.brand h1{font-family:"Orbitron",-apple-system,"Segoe UI",sans-serif;font-size:19px;font-weight:800;letter-spacing:.02em;margin:0;}
+.brand .sub{font-family:inherit;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink-soft);}
+.month-nav .month-label{font-family:inherit;}
+.who-email{font-family:inherit;}
+
+.filter-bar input[type=text]{background:rgba(255,255,255,.04);border:1px solid var(--panel-border);border-radius:10px;color:var(--ink);}
+.filter-bar input::placeholder{color:var(--text-faint,#4c5378);}
+.filter-bar select{border:1px solid var(--panel-border);border-radius:10px;background:rgba(255,255,255,.04);}
+.resp-chip{background:var(--panel);border:1px solid var(--panel-border);border-radius:10px;}
+.resp-chip.total{background:transparent;border-style:dashed;}
+button.resp-chip:hover{border-color:var(--accent2);}
+.resp-chip.active{border-color:var(--accent2);box-shadow:none;}
+.resp-chip .rc-bar{background:rgba(255,255,255,.08);}
+.resp-chip .rc-bar div{background:var(--accent-grad);}
+
+.ledger{background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);backdrop-filter:blur(14px);}
+.ledger-head{font-family:inherit;background:transparent;border-bottom:1px solid var(--panel-border);color:#4c5378;}
+.ledger-row{border-bottom:1px solid var(--panel-border);}
+.ledger-row:hover{background:rgba(255,255,255,.03);}
+.ledger-row.open{background:linear-gradient(135deg,rgba(79,107,255,.14),rgba(56,189,248,.07));}
+.ledger-row.open .chev{transform:rotate(90deg);}
+.chev{transition:transform .2s;color:#4c5378;}
+.client-name .assign{font-family:inherit;}
+.responsible-tag{font-family:inherit;background:rgba(56,189,248,.12);color:var(--accent2);}
+.regime-cell.empty{color:#4c5378;}
+.progress-bar{background:rgba(255,255,255,.08);}
+.progress-bar > div{background:var(--accent-grad);}
+.progress-pct{font-family:inherit;}
+.stamp{font-family:inherit;transform:none;border:none;border-radius:999px;font-size:11px;letter-spacing:.02em;text-transform:none;padding:4px 11px;}
+.stamp.pendente{color:var(--ink-soft);background:rgba(255,255,255,.07);}
+.stamp.em_conferencia{color:#38bdf8;background:rgba(56,189,248,.15);}
+.stamp.revisao_final{color:#f2c14e;background:rgba(242,193,78,.15);}
+.stamp.concluido{color:#34d399;background:rgba(52,211,153,.15);}
+.empty-state h3{font-family:inherit;}
+
+.detail{padding:14px 18px 18px;border-bottom:1px solid var(--panel-border);background:rgba(6,10,24,.55);}
+.stages{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.stage{flex:1;min-width:150px;padding:8px 12px;border-radius:12px;border:1px solid var(--panel-border);font-size:12px;color:#4c5378;}
+.stage b{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:1px;}
+.stage.done{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.06);color:#34d399;}.stage.done b{color:#34d399;}
+.stage.cur{border-color:rgba(79,107,255,.5);background:linear-gradient(135deg,rgba(79,107,255,.16),rgba(56,189,248,.08));color:var(--ink);}.stage.cur b{color:var(--ink);}
+.dchecks{margin-bottom:10px;}
+.check{padding:7px 2px;border-bottom:1px solid var(--panel-border);}
+.check .line{display:flex;align-items:center;gap:10px;}
+.check input[type=checkbox]{width:17px;height:17px;accent-color:#4f6bff;cursor:pointer;flex-shrink:0;}
+.check input[type=checkbox]:disabled{cursor:not-allowed;}
+.check .t{flex:0 1 38%;font-size:13.5px;}
+.check.done .t{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:#4c5378;}
+.obs{flex:1;min-width:0;padding:6px 10px;border-radius:8px;border:1px solid var(--panel-border);background:rgba(255,255,255,.03);color:var(--ink);font-size:12.5px;font-family:inherit;}
+.obs::placeholder{color:#4c5378;}
+.obs:focus{outline:none;border-color:var(--accent2);}
+.obs:disabled{background:transparent;}
+.obs.has{border-color:rgba(242,193,78,.5);}
+.help{width:24px;height:24px;border-radius:50%;border:1px solid var(--panel-border);background:var(--panel);color:var(--ink-soft);font-weight:700;font-size:12px;cursor:pointer;flex-shrink:0;}
+.help:hover,.help.on{border-color:var(--accent2);color:var(--accent2);}
+.help-sp{width:24px;flex-shrink:0;}
+.guide-box{display:none;margin:6px 0 2px 27px;padding:8px 12px;border-radius:10px;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.25);font-size:12.5px;line-height:1.5;color:var(--ink-soft);white-space:pre-wrap;}
+.guide-box.show{display:block;}
+.select-all-row{font-family:inherit;border-bottom:1px dashed var(--panel-border);}
+.select-all-row input[type=checkbox]{accent-color:#4f6bff;}
+.cascade-toggle input[type=checkbox]{accent-color:#4f6bff;}
+.section-label{font-family:inherit;}
+.signoff{border:1px solid var(--panel-border);border-radius:10px;}
+.signoff .role{font-family:inherit;}
+.signoff .empty{color:#4c5378;}
+.hint{background:rgba(255,255,255,.04);}
+.hint.warn{background:rgba(242,193,78,.12);color:#f2c14e;border-left:3px solid #f2c14e;}
+.history li{font-family:inherit;border-bottom:1px dashed var(--panel-border);}
+.dfoot{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center;margin-top:12px;}
+
+/* modais (configurações) */
+.overlay{background:rgba(2,4,12,.7);}
+.modal{background:#0b0f1e;border:1px solid var(--panel-border);border-radius:16px;color:var(--ink);}
+.modal-head{border-bottom:1px solid var(--panel-border);}
+.modal-head h2{font-family:inherit;}
+.modal-head .meta{font-family:inherit;}
+.modal-foot{border-top:1px solid var(--panel-border);}
+.cfg-block h3{font-family:inherit;}
+.cfg-item input[type=text],.cfg-item select,.cfg-client-selects select,.add-row input,.cfg-filter-row input,.cfg-filter-row select,.guide-edit textarea{background:rgba(255,255,255,.04);border:1px solid var(--panel-border);color:var(--ink);border-radius:8px;}
+.cfg-client-item,.cfg-tpl-item{border:1px solid var(--panel-border);border-radius:10px;}
+.guide-edit summary{font-family:inherit;}
+.setup-screen{position:relative;z-index:1;}
+.setup-screen h2{font-family:inherit;}
+.setup-screen .box{background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;}
+.setup-screen code{background:rgba(255,255,255,.08);}
+.login-field label{font-family:inherit;}
+.login-field input{background:rgba(255,255,255,.04);border:1px solid var(--panel-border);color:var(--ink);border-radius:10px;}
+.login-field input:focus{border-color:var(--accent2);}
+.loading{font-family:inherit;}
+
+/* página de ranking */
+.rv-head{display:flex;align-items:center;gap:16px;padding:6px 0 14px;flex-wrap:wrap;}
+.rv-head h2{margin:0;font-size:18px;}
+.rv-head p{margin:2px 0 0;font-size:12px;color:var(--ink-soft);}
+.rtabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.rt{background:var(--panel);border:1px solid var(--panel-border);color:var(--ink-soft);border-radius:10px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+.rt:hover{border-color:var(--accent2);color:var(--ink);}
+.rt.on{background:var(--accent-grad);border-color:transparent;color:#fff;}
+.rtabs.sub .rt{padding:6px 12px;font-size:12.5px;}
+.rcard{background:var(--panel);border:1px solid var(--panel-border);border-radius:16px;padding:18px 20px;margin-bottom:14px;backdrop-filter:blur(14px);overflow-x:auto;}
+.rcard h4{margin:0 0 12px;font-size:12px;color:var(--ink-soft);letter-spacing:.04em;text-transform:uppercase;}
+.rsm{font-size:11.5px;color:#4c5378;}
+table.rank{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.rank th{text-align:left;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#4c5378;padding:6px 8px;border-bottom:1px solid var(--panel-border);font-weight:600;}
+table.rank td{padding:9px 8px;border-bottom:1px solid var(--panel-border);}
+table.rank tr:last-child td{border-bottom:none;}
+.pos{width:32px;font-weight:800;color:var(--ink-soft);}
+.pos.g1{color:#f2c14e;}.pos.g2{color:#c9d3e6;}.pos.g3{color:#d08b57;}
+.mini{display:flex;align-items:center;gap:8px;min-width:100px;}
+.mini .b{flex:1;min-width:50px;height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;}
+.mini .b div{height:100%;background:var(--accent-grad);}
+.mini span{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+.mini.geral .b div{background:linear-gradient(90deg,#34d399,#38bdf8);}
+.hmt td,.hmt th{text-align:center;}
+.hmt td:first-child,.hmt th:first-child{text-align:left;}
+.hm{display:inline-block;min-width:46px;padding:5px 6px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(79,107,255,calc((var(--v) - 40) / 60 + .08));color:#fff;}
+
+@media print{ body{background:#fff !important;} .bg-fx,.stars{display:none !important;} }
+@media (max-width:640px){
+  .check .line{flex-wrap:wrap;}
+  .check .t{flex:1 1 100%;}
+}
 </style>
 </head>
 <body>
+<div class="bg-fx"></div><div class="stars"></div>
 <div class="app" id="app">
   <div class="loading">Carregando dados do escritório…</div>
 </div>
@@ -1146,28 +1292,52 @@ function render(){
   const existingOverlay = document.querySelector('.overlay');
   pendingScrollRestore = existingOverlay ? existingOverlay.scrollTop : 0;
   document.querySelectorAll('.overlay').forEach(o=>o.remove());
+  const pageScroll = window.scrollY;
   const activeEl = document.activeElement;
   const activeId = activeEl && activeEl.id ? activeEl.id : null;
   const selStart = activeEl && typeof activeEl.selectionStart === 'number' ? activeEl.selectionStart : null;
   const selEnd = activeEl && typeof activeEl.selectionEnd === 'number' ? activeEl.selectionEnd : null;
 
-  let html = '';
-  html += `<div class="topbar">
+  let html = topbarHtml();
+  html += (currentView==='rank') ? rankViewHtml() : mainBodyHtml();
+
+  app.innerHTML = html;
+  window.scrollTo(0, pageScroll);
+
+  if(showConfig){ renderConfigModal(); }
+
+  if(activeId){
+    const el = document.getElementById(activeId);
+    if(el){
+      el.focus();
+      if(selStart!==null && el.setSelectionRange){ try{ el.setSelectionRange(selStart, selEnd); }catch(e){} }
+    }
+  }
+}
+
+const LOGO_SVG = `<svg viewBox="0 0 141 109" xmlns="http://www.w3.org/2000/svg"><path d="M 15.33 33.25 L 9.50 52.58 L 11.33 74.33 L 19.08 90.67 L 36.17 102.92 L 57.25 104.92 L 73.25 100.08 L 84.92 104.83 L 100.25 104.83 L 115.75 97.92 L 126.00 85.67 L 129.92 74.17 L 130.25 61.92 L 60.92 62.08 L 62.42 49.00 L 130.58 48.75 L 129.92 37.75 L 126.75 29.75 L 118.33 20.33 L 111.42 16.33 L 97.92 12.75 L 88.58 12.67 L 72.58 18.17 L 59.83 13.67 L 41.33 13.58 L 26.42 20.42 Z M 78.58 93.58 L 86.00 80.08 L 86.00 78.42 L 87.00 77.08 L 87.00 74.33 L 87.92 72.75 L 88.33 69.50 L 120.42 69.42 L 121.00 69.92 L 121.08 74.17 L 120.17 75.42 L 120.08 77.17 L 119.25 78.25 L 119.25 79.58 L 117.33 83.67 L 115.83 85.17 L 114.75 87.33 L 111.33 90.75 L 109.25 91.75 L 108.08 92.92 L 102.33 95.92 L 100.33 96.00 L 98.50 97.00 L 85.58 97.00 L 84.42 96.00 L 82.58 95.92 Z M 62.33 69.50 L 78.42 69.42 L 79.25 70.08 L 79.25 70.92 L 78.33 72.58 L 78.33 74.25 L 77.42 75.42 L 77.42 77.00 L 76.50 78.25 L 76.58 79.67 L 76.00 80.33 L 75.58 81.67 L 74.92 82.33 L 74.67 83.58 L 73.92 84.33 L 73.58 85.50 L 71.67 87.58 L 71.17 87.50 L 70.75 87.00 L 69.92 86.67 L 69.00 85.25 L 66.75 82.83 L 66.25 81.42 L 63.83 77.00 L 63.75 75.25 L 62.83 74.17 L 62.83 71.67 L 61.92 70.58 L 61.92 69.92 Z M 20.17 69.75 L 20.58 69.42 L 52.00 69.67 L 52.83 70.58 L 53.17 72.50 L 54.08 73.67 L 54.17 75.50 L 55.08 76.50 L 55.00 78.17 L 56.00 80.75 L 59.67 86.42 L 60.00 87.83 L 61.58 89.33 L 61.83 90.58 L 63.50 92.33 L 63.42 93.75 L 62.58 94.83 L 61.33 95.08 L 60.33 96.00 L 58.42 96.08 L 57.42 97.00 L 43.83 97.00 L 42.58 96.00 L 41.00 96.00 L 39.75 95.08 L 38.42 95.08 L 36.25 94.08 L 34.75 92.67 L 30.33 90.25 L 26.67 86.50 L 26.42 85.33 L 23.08 81.00 L 22.83 79.08 L 21.00 76.25 L 20.92 73.83 L 20.00 72.50 Z M 19.08 50.08 L 20.42 49.00 L 51.83 49.08 L 52.33 49.58 L 52.25 55.25 L 51.42 57.83 L 51.42 61.17 L 50.67 61.83 L 18.58 61.83 L 18.08 61.33 L 18.08 58.58 L 19.08 56.17 Z M 72.67 28.83 L 75.50 31.67 L 76.58 33.58 L 77.42 34.58 L 77.58 36.42 L 78.42 37.50 L 78.33 38.92 L 79.33 40.33 L 79.25 41.00 L 78.50 41.42 L 65.25 41.33 L 64.67 40.58 L 64.58 39.67 L 65.42 38.50 L 65.67 37.42 L 66.42 36.50 L 66.58 35.50 L 68.00 33.92 L 68.50 32.58 L 72.00 29.00 Z M 80.17 23.67 L 81.50 22.33 L 82.75 22.00 L 83.75 21.17 L 85.50 21.08 L 86.58 20.17 L 99.25 20.17 L 100.33 21.08 L 103.00 21.17 L 104.25 22.08 L 107.75 23.08 L 109.42 24.67 L 112.67 26.00 L 117.08 30.42 L 120.17 35.50 L 120.17 37.00 L 121.17 38.50 L 121.08 40.83 L 120.42 41.42 L 88.50 41.42 L 87.92 40.67 L 87.92 38.33 L 86.92 36.92 L 86.92 34.50 L 86.17 33.75 L 84.75 30.33 L 80.75 25.42 Z M 64.58 23.67 L 63.33 26.33 L 61.08 28.58 L 60.67 29.83 L 59.17 31.33 L 58.75 32.75 L 57.33 34.33 L 56.08 37.00 L 55.92 38.33 L 55.08 39.25 L 55.08 40.75 L 54.42 41.42 L 22.58 41.50 L 22.17 41.17 L 22.92 39.42 L 22.83 38.42 L 26.83 31.42 L 33.17 25.17 L 41.00 21.17 L 43.58 21.08 L 44.75 20.17 L 57.50 20.17 L 58.92 21.00 L 60.83 21.17 L 63.08 22.17 Z" fill="#5D4232" fill-rule="evenodd"/></svg>`;
+let currentView = 'main';       // 'main' | 'rank'
+let rankState = { loading:false, docs:null, error:false };
+let rankTab = 'geral';          // geral | mes | etapa | emp
+let rankStage = 0;              // 0,1,2 (aba "Por etapa")
+const openGuides = new Set();   // "clienteId:itemId" com o "Como fazer" aberto
+
+function topbarHtml(){
+  return `<div class="topbar">
     <div class="brand">
-      <h1>Fechamento Contábil</h1>
-      <div class="sub">Controle de fechamentos contábeis</div>
+      <div class="orb">${LOGO_SVG}</div>
+      <div><h1>Fechamento Contábil</h1><div class="sub">Controle de fechamentos contábeis</div></div>
     </div>
     <div class="top-controls">
-      <div class="cricon-brand">
-        <svg viewBox="0 0 141 109" xmlns="http://www.w3.org/2000/svg"><path d="M 15.33 33.25 L 9.50 52.58 L 11.33 74.33 L 19.08 90.67 L 36.17 102.92 L 57.25 104.92 L 73.25 100.08 L 84.92 104.83 L 100.25 104.83 L 115.75 97.92 L 126.00 85.67 L 129.92 74.17 L 130.25 61.92 L 60.92 62.08 L 62.42 49.00 L 130.58 48.75 L 129.92 37.75 L 126.75 29.75 L 118.33 20.33 L 111.42 16.33 L 97.92 12.75 L 88.58 12.67 L 72.58 18.17 L 59.83 13.67 L 41.33 13.58 L 26.42 20.42 Z M 78.58 93.58 L 86.00 80.08 L 86.00 78.42 L 87.00 77.08 L 87.00 74.33 L 87.92 72.75 L 88.33 69.50 L 120.42 69.42 L 121.00 69.92 L 121.08 74.17 L 120.17 75.42 L 120.08 77.17 L 119.25 78.25 L 119.25 79.58 L 117.33 83.67 L 115.83 85.17 L 114.75 87.33 L 111.33 90.75 L 109.25 91.75 L 108.08 92.92 L 102.33 95.92 L 100.33 96.00 L 98.50 97.00 L 85.58 97.00 L 84.42 96.00 L 82.58 95.92 Z M 62.33 69.50 L 78.42 69.42 L 79.25 70.08 L 79.25 70.92 L 78.33 72.58 L 78.33 74.25 L 77.42 75.42 L 77.42 77.00 L 76.50 78.25 L 76.58 79.67 L 76.00 80.33 L 75.58 81.67 L 74.92 82.33 L 74.67 83.58 L 73.92 84.33 L 73.58 85.50 L 71.67 87.58 L 71.17 87.50 L 70.75 87.00 L 69.92 86.67 L 69.00 85.25 L 66.75 82.83 L 66.25 81.42 L 63.83 77.00 L 63.75 75.25 L 62.83 74.17 L 62.83 71.67 L 61.92 70.58 L 61.92 69.92 Z M 20.17 69.75 L 20.58 69.42 L 52.00 69.67 L 52.83 70.58 L 53.17 72.50 L 54.08 73.67 L 54.17 75.50 L 55.08 76.50 L 55.00 78.17 L 56.00 80.75 L 59.67 86.42 L 60.00 87.83 L 61.58 89.33 L 61.83 90.58 L 63.50 92.33 L 63.42 93.75 L 62.58 94.83 L 61.33 95.08 L 60.33 96.00 L 58.42 96.08 L 57.42 97.00 L 43.83 97.00 L 42.58 96.00 L 41.00 96.00 L 39.75 95.08 L 38.42 95.08 L 36.25 94.08 L 34.75 92.67 L 30.33 90.25 L 26.67 86.50 L 26.42 85.33 L 23.08 81.00 L 22.83 79.08 L 21.00 76.25 L 20.92 73.83 L 20.00 72.50 Z M 19.08 50.08 L 20.42 49.00 L 51.83 49.08 L 52.33 49.58 L 52.25 55.25 L 51.42 57.83 L 51.42 61.17 L 50.67 61.83 L 18.58 61.83 L 18.08 61.33 L 18.08 58.58 L 19.08 56.17 Z M 72.67 28.83 L 75.50 31.67 L 76.58 33.58 L 77.42 34.58 L 77.58 36.42 L 78.42 37.50 L 78.33 38.92 L 79.33 40.33 L 79.25 41.00 L 78.50 41.42 L 65.25 41.33 L 64.67 40.58 L 64.58 39.67 L 65.42 38.50 L 65.67 37.42 L 66.42 36.50 L 66.58 35.50 L 68.00 33.92 L 68.50 32.58 L 72.00 29.00 Z M 80.17 23.67 L 81.50 22.33 L 82.75 22.00 L 83.75 21.17 L 85.50 21.08 L 86.58 20.17 L 99.25 20.17 L 100.33 21.08 L 103.00 21.17 L 104.25 22.08 L 107.75 23.08 L 109.42 24.67 L 112.67 26.00 L 117.08 30.42 L 120.17 35.50 L 120.17 37.00 L 121.17 38.50 L 121.08 40.83 L 120.42 41.42 L 88.50 41.42 L 87.92 40.67 L 87.92 38.33 L 86.92 36.92 L 86.92 34.50 L 86.17 33.75 L 84.75 30.33 L 80.75 25.42 Z M 64.58 23.67 L 63.33 26.33 L 61.08 28.58 L 60.67 29.83 L 59.17 31.33 L 58.75 32.75 L 57.33 34.33 L 56.08 37.00 L 55.92 38.33 L 55.08 39.25 L 55.08 40.75 L 54.42 41.42 L 22.58 41.50 L 22.17 41.17 L 22.92 39.42 L 22.83 38.42 L 26.83 31.42 L 33.17 25.17 L 41.00 21.17 L 43.58 21.08 L 44.75 20.17 L 57.50 20.17 L 58.92 21.00 L 60.83 21.17 L 63.08 22.17 Z" fill="#5D4232" fill-rule="evenodd"/></svg>
-        <div class="cw"><div class="nm">Contabilidade Cricon</div><div class="tg">Contabilizando seu sucesso!</div></div>
-      </div>
+      <button class="pill rank" onclick="openRank()">🏆 Ranking</button>
       <button class="icon-btn" onclick="openConfig()" title="Configurações">⚙</button>
       <button class="icon-btn" onclick="handleLogout()" title="Sair">⏻</button>
     </div>
   </div>`;
+}
 
-  html += `<div class="month-nav">
+function mainBodyHtml(){
+  let html = `<div class="month-nav">
     <button class="icon-btn" onclick="goMonth(-1)">‹</button>
     <div class="month-label">${monthLabel(currentMonthKey)}</div>
     <button class="icon-btn" onclick="goMonth(1)">›</button>
@@ -1181,149 +1351,130 @@ function render(){
   </div>`;
 
   if(config.clients.length===0){
-    html += `<div class="ledger"><div class="empty-state">
+    return html + `<div class="ledger"><div class="empty-state">
       <h3>Nenhum cliente cadastrado</h3>
       <p>Abra as configurações (⚙) para cadastrar os clientes do escritório e a equipe.</p>
       <button class="btn" onclick="openConfig()">Abrir configurações</button>
     </div></div>`;
+  }
+
+  html += `<div class="filter-bar">
+    <input type="text" id="clientSearchInput" placeholder="🔍 Buscar cliente…" value="${escapeHtml(filterSearch)}" oninput="setFilterSearch(this.value)">
+    <select onchange="setFilterStatus(this.value)">
+      <option value="">Todos os status</option>
+      <option value="pendente" ${filterStatus==='pendente'?'selected':''}>Pendente</option>
+      <option value="em_conferencia" ${filterStatus==='em_conferencia'?'selected':''}>Em conferência</option>
+      <option value="revisao_final" ${filterStatus==='revisao_final'?'selected':''}>Revisão final</option>
+      <option value="concluido" ${filterStatus==='concluido'?'selected':''}>Concluído</option>
+    </select>
+    <select onchange="setFilterRegime(this.value)">
+      <option value="">Todas as tributações</option>
+      ${TAX_REGIMES.map(r=>`<option value="${r}" ${filterRegime===r?'selected':''}>${r}</option>`).join('')}
+      <option value="__none__" ${filterRegime==='__none__'?'selected':''}>Não informado</option>
+    </select>
+    <select onchange="setFilterResponsible(this.value)">
+      <option value="">Todos os responsáveis</option>
+      ${config.teamMembers.map(m=>`<option value="${escapeHtml(m)}" ${filterResponsible===m?'selected':''}>${escapeHtml(m)}</option>`).join('')}
+      <option value="__none__" ${filterResponsible==='__none__'?'selected':''}>Sem responsável</option>
+    </select>
+    <select onchange="setSortBy(this.value)">
+      <option value="name" ${sortBy==='name'?'selected':''}>Ordenar: Nome</option>
+      <option value="regime" ${sortBy==='regime'?'selected':''}>Ordenar: Tributação</option>
+      <option value="status" ${sortBy==='status'?'selected':''}>Ordenar: Status</option>
+    </select>
+    <div class="export-group">
+      <button class="btn ghost small" onclick="exportExcel(event)">Exportar Excel</button>
+      <button class="btn ghost small" onclick="printReport(event)">Imprimir / PDF</button>
+    </div>
+  </div>`;
+  html += respSummaryHtml();
+
+  const filteredList = getFilteredSortedClients();
+  html += `<div class="ledger">
+    <div class="ledger-head"><div>Cliente</div><div>Tributação</div><div>Progresso</div><div>Situação</div><div></div></div>`;
+  if(filteredList.length===0){
+    html += `<div class="empty-state"><h3>Nenhum cliente encontrado</h3><p>Ajuste a busca ou os filtros acima.</p></div>`;
   } else {
-    html += `<div class="filter-bar">
-      <input type="text" id="clientSearchInput" placeholder="Buscar cliente…" value="${escapeHtml(filterSearch)}" oninput="setFilterSearch(this.value)">
-      <select onchange="setFilterStatus(this.value)">
-        <option value="">Todos os status</option>
-        <option value="pendente" ${filterStatus==='pendente'?'selected':''}>Pendente</option>
-        <option value="em_conferencia" ${filterStatus==='em_conferencia'?'selected':''}>Em conferência</option>
-        <option value="revisao_final" ${filterStatus==='revisao_final'?'selected':''}>Revisão final</option>
-        <option value="concluido" ${filterStatus==='concluido'?'selected':''}>Concluído</option>
-      </select>
-      <select onchange="setFilterRegime(this.value)">
-        <option value="">Todas as tributações</option>
-        ${TAX_REGIMES.map(r=>`<option value="${r}" ${filterRegime===r?'selected':''}>${r}</option>`).join('')}
-        <option value="__none__" ${filterRegime==='__none__'?'selected':''}>Não informado</option>
-      </select>
-      <select onchange="setFilterResponsible(this.value)">
-        <option value="">Todos os responsáveis</option>
-        ${config.teamMembers.map(m=>`<option value="${escapeHtml(m)}" ${filterResponsible===m?'selected':''}>${escapeHtml(m)}</option>`).join('')}
-        <option value="__none__" ${filterResponsible==='__none__'?'selected':''}>Sem responsável</option>
-      </select>
-      <select onchange="setSortBy(this.value)">
-        <option value="name" ${sortBy==='name'?'selected':''}>Ordenar: Nome</option>
-        <option value="regime" ${sortBy==='regime'?'selected':''}>Ordenar: Tributação</option>
-        <option value="status" ${sortBy==='status'?'selected':''}>Ordenar: Status</option>
-      </select>
-      <div class="export-group">
-        <button class="btn ghost small" onclick="exportExcel(event)">Exportar Excel</button>
-        <button class="btn ghost small" onclick="printReport(event)">Imprimir / PDF</button>
-      </div>
-    </div>`;
-    html += respSummaryHtml();
-
-    const filteredList = getFilteredSortedClients();
-    html += `<div class="ledger">
-      <div class="ledger-head"><div>Cliente</div><div>Tributação</div><div>Progresso</div><div>Situação</div><div></div></div>`;
-    if(filteredList.length===0){
-      html += `<div class="empty-state"><h3>Nenhum cliente encontrado</h3><p>Ajuste a busca ou os filtros acima.</p></div>`;
-    } else {
-      filteredList.forEach(({cl,c})=>{
-        const p = pct(c);
-        const hasNotes = c.checklist.some(i=>i.note && i.note.trim());
-        const assignee = c.status==='pendente' ? (c.checklist.some(i=>i.done)? 'em andamento' : '') :
-                          c.status==='em_conferencia' ? ('executado por '+c.executor) :
-                          c.status==='revisao_final' ? ('conferido por '+c.conferente) :
-                          ('aprovado por '+c.aprovador);
-        html += `<div class="ledger-row" onclick="openDetail('${cl.id}')">
-          <div class="client-name">${escapeHtml(cl.name)}${cl.responsible?` <span class="responsible-tag">${escapeHtml(cl.responsible)}</span>`:''}${hasNotes?' <span class="note-flag" title="Há observações pendentes">📝</span>':''}${assignee?`<span class="assign">${escapeHtml(assignee)}</span>`:''}</div>
-          <div class="regime-cell ${cl.taxRegime?'':'empty'}">${escapeHtml(cl.taxRegime||'Não informado')}</div>
-          <div class="progress-wrap"><div class="progress-bar"><div style="width:${p}%"></div></div><div class="progress-pct">${p}%</div></div>
-          <div class="stamp-cell"><span class="stamp ${c.status}">${STAGE_LABELS[c.status]}</span></div>
-          <div class="chev">›</div>
-        </div>`;
-      });
-    }
-    html += `</div>`;
+    filteredList.forEach(({cl,c})=>{
+      const p = pct(c);
+      const hasNotes = c.checklist.some(i=>i.note && i.note.trim());
+      const assignee = c.status==='pendente' ? (c.checklist.some(i=>i.done)? 'em andamento' : '') :
+                        c.status==='em_conferencia' ? ('executado por '+c.executor) :
+                        c.status==='revisao_final' ? ('conferido por '+c.conferente) :
+                        ('aprovado por '+c.aprovador);
+      const isOpen = openClientId===cl.id;
+      html += `<div class="ledger-row ${isOpen?'open':''}" onclick="toggleDetail('${cl.id}')">
+        <div class="client-name">${escapeHtml(cl.name)}${cl.responsible?` <span class="responsible-tag">${escapeHtml(cl.responsible)}</span>`:''}${hasNotes?' <span class="note-flag" title="Há observações pendentes">📝</span>':''}${assignee?`<span class="assign">${escapeHtml(assignee)}</span>`:''}</div>
+        <div class="regime-cell ${cl.taxRegime?'':'empty'}">${escapeHtml(cl.taxRegime||'Não informado')}</div>
+        <div class="progress-wrap"><div class="progress-bar"><div style="width:${p}%"></div></div><div class="progress-pct">${p}%</div></div>
+        <div class="stamp-cell"><span class="stamp ${c.status}">${STAGE_LABELS[c.status]}</span></div>
+        <div class="chev">›</div>
+      </div>`;
+      if(isOpen) html += detailHtml(cl, c);
+    });
   }
-
-  app.innerHTML = html;
-
-  if(openClientId){ renderDetailModal(); }
-  if(showConfig){ renderConfigModal(); }
-
-  if(activeId){
-    const el = document.getElementById(activeId);
-    if(el){
-      el.focus();
-      if(selStart!==null && el.setSelectionRange){ try{ el.setSelectionRange(selStart, selEnd); }catch(e){} }
-    }
-  }
+  return html + `</div>`;
 }
 
-function renderDetailModal(){
-  const cl = config.clients.find(c=>c.id===openClientId);
-  if(!cl){ openClientId=null; return; }
-  const c = getClosing(cl.id);
+function toggleDetail(id){ openClientId = (openClientId===id) ? null : id; render(); }
+function closeDetail(){ openClientId = null; render(); }
+function toggleGuide(btn, key){
+  const box = btn.closest('.check').querySelector('.guide-box');
+  const open = box.classList.toggle('show');
+  btn.classList.toggle('on', open);
+  if(open) openGuides.add(key); else openGuides.delete(key);
+}
+
+function detailHtml(cl, c){
   const stageOrder = ['pendente','em_conferencia','revisao_final','concluido'];
   const stageIdx = stageOrder.indexOf(c.status);
+  const total = c.checklist.length || 1;
+  const nDone = c.checklist.filter(i=>i.done).length;
+  const nConf = c.checklist.filter(i=>i.confDone).length;
 
-  const trail = ['Fechamento','Conferência','Aprovação'].map((label,i)=>{
-    let cls = 'node';
-    if(i<stageIdx || c.status==='concluido' && i<3) cls += ' done';
-    if(i===stageIdx && c.status!=='concluido') cls += ' active';
-    if(i===2 && c.status==='concluido') cls += ' done';
-    return `<div class="${cls}">${label}</div>`;
+  const stageDefs = [
+    { label:'1 · Fechamento',   who:c.executor,  cur:`em andamento — ${nDone} de ${total} itens`, doneTxt:'concluído' },
+    { label:'2 · Conferência',  who:c.conferente, cur:`em andamento — ${nConf} de ${total} itens`, doneTxt:'concluída' },
+    { label:'3 · Revisão final', who:c.aprovador, cur:'aguardando finalização', doneTxt:'finalizado' }
+  ];
+  const stagesHtml = stageDefs.map((s,i)=>{
+    let cls = 'stage', txt = 'aguardando';
+    if(stageIdx > i){ cls += ' done'; txt = s.doneTxt + (s.who ? ' por '+escapeHtml(s.who) : ''); }
+    else if(stageIdx === i){ cls += ' cur'; txt = s.cur; }
+    return `<div class="${cls}"><b>${s.label}</b>${txt}</div>`;
   }).join('');
 
-  function guideBlock(item){
-    if(!item.guide) return '';
-    return `<details class="guide"><summary>Como fazer</summary><p>${escapeHtml(item.guide)}</p></details>`;
-  }
-  function noteBlock(item, clientId, locked){
-    const val = escapeHtml(item.note||'');
-    return `<div class="note-field">
-      <label>Observação${item.note && item.note.trim() ? ' <span class="note-dot"></span>' : ''}</label>
-      <input type="text" value="${val}" placeholder="Ex.: falta nota fiscal do fornecedor X, aguardando envio…"
-        ${locked?'disabled':''} onchange="updateItemNote('${clientId}','${item.id}', this.value)">
-    </div>`;
-  }
-  const noteLocked = c.status==='concluido';
+  const locked = c.status==='concluido';
+  const field = c.status==='pendente' ? 'done' : (c.status==='em_conferencia' ? 'confDone' : null);
   const allDone = c.checklist.every(i=>i.done);
   const allConf = c.checklist.every(i=>i.confDone);
 
   let selectAllRow = '';
-  if(c.status==='pendente'){
+  if(field){
+    const all = field==='done' ? allDone : allConf;
     selectAllRow = `<label class="select-all-row">
-      <input type="checkbox" ${allDone?'checked':''} onchange="toggleAllItems('${cl.id}','done')">
-      <span>Marcar todos</span>
-    </label>`;
-  } else if(c.status==='em_conferencia'){
-    selectAllRow = `<label class="select-all-row">
-      <input type="checkbox" ${allConf?'checked':''} onchange="toggleAllItems('${cl.id}','confDone')">
+      <input type="checkbox" ${all?'checked':''} onchange="toggleAllItems('${cl.id}','${field}')">
       <span>Marcar todos</span>
     </label>`;
   }
 
-  let checklistHtml = '';
-  if(c.status==='pendente'){
-    checklistHtml = c.checklist.map(item=>`
-      <li class="${item.done?'done':''}">
-        <input type="checkbox" ${item.done?'checked':''} onchange="toggleItem('${cl.id}','${item.id}','done')">
-        <div class="item-body"><span>${escapeHtml(item.text)}</span>${guideBlock(item)}${noteBlock(item, cl.id, noteLocked)}</div>
-      </li>`).join('');
-  } else if(c.status==='em_conferencia'){
-    checklistHtml = c.checklist.map(item=>`
-      <li class="${item.confDone?'done':''}">
-        <input type="checkbox" ${item.confDone?'checked':''} onchange="toggleItem('${cl.id}','${item.id}','confDone')">
-        <div class="item-body"><span>${escapeHtml(item.text)}</span>${guideBlock(item)}${noteBlock(item, cl.id, noteLocked)}</div>
-      </li>`).join('');
-  } else {
-    checklistHtml = c.checklist.map(item=>`
-      <li class="done">
-        <input type="checkbox" checked disabled>
-        <div class="item-body"><span>${escapeHtml(item.text)}</span>${guideBlock(item)}${noteBlock(item, cl.id, noteLocked)}</div>
-      </li>`).join('');
-  }
+  const rows = c.checklist.map(item=>{
+    const checked = field ? item[field] : true;
+    const key = cl.id+':'+item.id;
+    const guideOpen = openGuides.has(key);
+    const hasNote = item.note && item.note.trim();
+    return `<div class="check ${checked?'done':''}">
+      <div class="line">
+        <input type="checkbox" ${checked?'checked':''} ${field?'':'disabled'} ${field?`onchange="toggleItem('${cl.id}','${item.id}','${field}')"`:''}>
+        <span class="t">${escapeHtml(item.text)}</span>
+        <input type="text" class="obs ${hasNote?'has':''}" id="obs_${cl.id}_${item.id}" value="${escapeHtml(item.note||'')}" placeholder="Observação: ex. falta nota fiscal do fornecedor X…" ${locked?'disabled':''} onchange="updateItemNote('${cl.id}','${item.id}', this.value)">
+        ${item.guide ? `<button type="button" class="help ${guideOpen?'on':''}" title="Como fazer" onclick="toggleGuide(this,'${key}')">?</button>` : `<span class="help-sp"></span>`}
+      </div>
+      ${item.guide ? `<div class="guide-box ${guideOpen?'show':''}">${escapeHtml(item.guide)}</div>` : ''}
+    </div>`;
+  }).join('');
 
-  let actionButtons = '';
-  let hint = '';
+  let actionButtons = '', hint = '';
   if(c.status==='pendente'){
     actionButtons = `<button class="btn" ${allDone?'':'disabled'} onclick="sendToConference('${cl.id}')">Enviar para conferência</button>`;
     if(!allDone) hint = `<div class="hint">Marque todos os itens do checklist para liberar o envio à conferência.</div>`;
@@ -1350,35 +1501,133 @@ function renderDetailModal(){
     c.history.slice().reverse().map(h=>`<li>${h.t} — ${escapeHtml(h.what)} (${escapeHtml(h.who)})</li>`).join('')
   }</ul></div>` : '';
 
-  const overlay = document.createElement('div');
-  overlay.className = 'overlay';
-  overlay.onclick = (e)=>{ if(e.target===overlay) closeDetail(); };
-  overlay.innerHTML = `<div class="modal">
-    <div class="modal-head">
-      <div>
-        <h2>${escapeHtml(cl.name)}</h2>
-        <div class="meta">${monthLabel(currentMonthKey)}</div>
-      </div>
-      <button class="close-x" onclick="closeDetail()">✕</button>
+  return `<div class="detail">
+    <div class="stages">${stagesHtml}</div>
+    ${selectAllRow}
+    <div class="dchecks">${rows}</div>
+    ${hint}
+    <div class="signoffs">
+      <div class="signoff"><div class="role">Fechamento</div><div class="name ${!c.executor?'empty':''}">${c.executor?escapeHtml(c.executor):'—'}</div></div>
+      <div class="signoff"><div class="role">Conferência</div><div class="name ${!c.conferente?'empty':''}">${c.conferente?escapeHtml(c.conferente):'—'}</div></div>
+      <div class="signoff"><div class="role">Aprovação</div><div class="name ${!c.aprovador?'empty':''}">${c.aprovador?escapeHtml(c.aprovador):'—'}</div></div>
     </div>
-    <div class="modal-body">
-      <div class="trail">${trail}</div>
-      <div class="section-label">Checklist</div>
-      ${selectAllRow}
-      <ul class="checklist">${checklistHtml}</ul>
-      ${hint}
-      <div class="section-label">Responsáveis</div>
-      <div class="signoffs">
-        <div class="signoff"><div class="role">Fechamento</div><div class="name ${!c.executor?'empty':''}">${c.executor?escapeHtml(c.executor):'—'}</div></div>
-        <div class="signoff"><div class="role">Conferência</div><div class="name ${!c.conferente?'empty':''}">${c.conferente?escapeHtml(c.conferente):'—'}</div></div>
-        <div class="signoff"><div class="role">Aprovação</div><div class="name ${!c.aprovador?'empty':''}">${c.aprovador?escapeHtml(c.aprovador):'—'}</div></div>
-      </div>
-      ${historyHtml}
-    </div>
-    <div class="modal-foot">${cascadeCheckbox}${actionButtons}</div>
+    ${historyHtml}
+    <div class="dfoot">${cascadeCheckbox}${actionButtons}</div>
   </div>`;
-  document.body.appendChild(overlay);
-  overlay.scrollTop = pendingScrollRestore;
+}
+
+/* ---------- ranking (página própria) ---------- */
+async function openRank(){
+  currentView = 'rank';
+  rankState = { loading:true, docs:null, error:false };
+  render();
+  try{
+    rankState = { loading:false, docs: await window.__fbListMonthDocs(), error:false };
+  }catch(e){
+    console.error('Erro ao carregar histórico para o ranking', e);
+    rankState = { loading:false, docs:null, error:true };
+  }
+  render();
+}
+function closeRank(){ currentView = 'main'; render(); }
+function setRankTab(t){ rankTab = t; render(); }
+function setRankStage(i){ rankStage = i; render(); }
+
+// 1ª etapa = saiu de "pendente"; 2ª = conferência aprovada; 3ª = fechamento concluído.
+function computeRankData(){
+  const [yy, curM] = currentMonthKey.split('-').map(Number);
+  const keys = [];
+  for(let m=1; m<curM; m++) keys.push(yy + '-' + String(m).padStart(2,'0'));
+  const parsed = {};
+  keys.forEach(k=>{
+    try{ parsed[k] = rankState.docs && rankState.docs[k] ? JSON.parse(rankState.docs[k]) : {}; }
+    catch(e){ parsed[k] = {}; }
+  });
+  const rank = e => e ? (STATUS_ORDER[e.status] || 0) : 0;
+  const clients = config.clients.map(cl=>{
+    const s = [0,0,0];
+    const monthly = keys.map(k=>{
+      const r = rank(parsed[k][cl.id]);
+      if(r>=1) s[0]++; if(r>=2) s[1]++; if(r>=3) s[2]++;
+      return r;
+    });
+    return { cl, s, monthly };
+  });
+  const byResp = {};
+  clients.forEach(x=>{
+    const key = x.cl.responsible || '__none__';
+    const e = byResp[key] || (byResp[key] = { key, name:x.cl.responsible || 'Sem responsável', nClients:0, s:[0,0,0], monthS:keys.map(()=>[0,0,0]) });
+    e.nClients++;
+    x.s.forEach((v,i)=>{ e.s[i]+=v; });
+    x.monthly.forEach((r,mi)=>{ for(let st=0; st<3; st++){ if(r>=st+1) e.monthS[mi][st]++; } });
+  });
+  const hidden = n => RESP_SUMMARY_HIDE.some(h=>n.toLowerCase().startsWith(h));
+  const resp = Object.values(byResp).filter(e=>!hidden(e.name)).map(e=>{
+    const tot = e.nClients * keys.length;
+    const p = e.s.map(v=> tot ? Math.round(100*v/tot) : 0);
+    const monthly = e.monthS.map(ms=>{
+      if(!e.nClients) return 0;
+      return Math.round(100*(ms[0]+ms[1]+ms[2])/(3*e.nClients));
+    });
+    return { name:e.name, key:e.key, nClients:e.nClients, tot, counts:e.s, p, geral: Math.round((p[0]+p[1]+p[2])/3), monthly };
+  });
+  return { keys, clients, resp };
+}
+
+function rkBar(p, txt, cls){
+  return `<div class="mini ${cls||''}"><div class="b"><div style="width:${p}%"></div></div><span>${txt}</span></div>`;
+}
+function rkPos(i){ return `<td class="pos ${['g1','g2','g3'][i]||''}">${i+1}</td>`; }
+
+function rankViewHtml(){
+  const head = `<div class="rv-head">
+    <button class="pill" onclick="closeRank()">← Voltar ao fechamento</button>
+    <div><h2>🏆 Rankings</h2><p id="rankPeriod"></p></div>
+  </div>`;
+  if(rankState.loading) return head + `<div class="loading">Carregando histórico dos meses…</div>`;
+  if(rankState.error) return head + `<div class="rcard"><div class="rsm">Não foi possível carregar o histórico. Verifique a conexão e tente de novo.</div></div>`;
+
+  const d = computeRankData();
+  const [yy] = currentMonthKey.split('-');
+  if(!d.keys.length){
+    return head + `<div class="rcard"><div class="rsm">Ainda não há meses anteriores em ${yy} para comparar — o ranking considera janeiro até o mês anterior ao mês selecionado.</div></div>`;
+  }
+  const period = `${MONTH_ABBR[0]}–${MONTH_ABBR[d.keys.length-1]}/${yy} (${d.keys.length} ${d.keys.length===1?'mês':'meses'}, até o mês anterior ao selecionado)`;
+  const tabs = [['geral','Geral'],['mes','Por mês'],['etapa','Por etapa'],['emp','Empresas concluídas']];
+  const tabsHtml = `<div class="rtabs">${tabs.map(([k,l])=>`<button class="rt ${rankTab===k?'on':''}" onclick="setRankTab('${k}')">${l}</button>`).join('')}</div>`;
+  const stageNames = ['1ª · Fechamento','2ª · Conferência','3ª · Revisão final'];
+  let body = '';
+
+  if(rankTab==='geral'){
+    const rows = d.resp.slice().sort((a,b)=>b.geral-a.geral).map((r,i)=>`<tr>${rkPos(i)}
+      <td><b>${escapeHtml(r.name)}</b><div class="rsm">${r.nClients} empresa(s) · ${r.tot} fechamentos</div></td>
+      ${r.p.map((p,si)=>`<td>${rkBar(p, p+'%')}</td>`).join('')}
+      <td>${rkBar(r.geral, r.geral+'%', 'geral')}</td></tr>`).join('');
+    body = `<div class="rcard"><h4>Ranking geral por responsável</h4>
+      <table class="rank"><thead><tr><th>#</th><th>Responsável</th>${stageNames.map(n=>`<th>${n}</th>`).join('')}<th>Geral</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="rsm" style="margin-top:10px">% de fechamentos (empresa × mês) que chegaram ao fim de cada etapa. Geral = média das três etapas.</p></div>`;
+  } else if(rankTab==='mes'){
+    const rows = d.resp.slice().sort((a,b)=>b.geral-a.geral).map(r=>`<tr><td><b>${escapeHtml(r.name)}</b></td>${r.monthly.map(v=>`<td><span class="hm" style="--v:${v}">${v}%</span></td>`).join('')}</tr>`).join('');
+    body = `<div class="rcard"><h4>Evolução por mês · % geral concluído</h4>
+      <table class="rank hmt"><thead><tr><th>Responsável</th>${d.keys.map((k,i)=>`<th>${MONTH_ABBR[i]}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+      <p class="rsm" style="margin-top:10px">Cada célula = % das empresas do responsável que concluíram as etapas naquele mês (média das três). Mais forte = melhor.</p></div>`;
+  } else if(rankTab==='etapa'){
+    const si = rankStage;
+    const rows = d.resp.slice().sort((a,b)=>b.p[si]-a.p[si]).map((r,i)=>`<tr>${rkPos(i)}<td><b>${escapeHtml(r.name)}</b></td><td>${rkBar(r.p[si], r.p[si]+'%')}</td><td class="rsm">${r.counts[si]}/${r.tot}</td></tr>`).join('');
+    body = `<div class="rcard"><h4>Ranking por etapa</h4>
+      <div class="rtabs sub">${stageNames.map((n,i)=>`<button class="rt ${si===i?'on':''}" onclick="setRankStage(${i})">${n}</button>`).join('')}</div>
+      <table class="rank"><thead><tr><th>#</th><th>Responsável</th><th>${stageNames[si]}</th><th>Fechamentos</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  } else {
+    const hidden = n => RESP_SUMMARY_HIDE.some(h=>(n||'').toLowerCase().startsWith(h));
+    const list = d.clients.filter(x=>!hidden(x.cl.responsible)).slice().sort((a,b)=> (b.s[2]-a.s[2]) || (b.s[1]-a.s[1]) || (b.s[0]-a.s[0]) || a.cl.name.localeCompare(b.cl.name));
+    const n = d.keys.length;
+    const rows = list.map((x,i)=>`<tr>${rkPos(i)}<td><b>${escapeHtml(x.cl.name)}</b></td><td class="rsm">${escapeHtml(x.cl.responsible||'—')}</td>
+      <td>${rkBar(Math.round(100*x.s[2]/n), x.s[2]+'/'+n+' meses')}</td>
+      <td class="rsm">${x.s[0]} · ${x.s[1]} · ${x.s[2]}</td></tr>`).join('');
+    body = `<div class="rcard"><h4>Empresas com fechamento concluído · janeiro até o mês anterior</h4>
+      <table class="rank"><thead><tr><th>#</th><th>Empresa</th><th>Responsável</th><th>Meses concluídos</th><th>Por etapa (1ª · 2ª · 3ª)</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  return head.replace('<p id="rankPeriod"></p>', `<p>${period}</p>`) + tabsHtml + body;
 }
 
 function renderConfigModal(){
@@ -1510,8 +1759,6 @@ async function setUser(name){
   }
   render();
 }
-function openDetail(id){ openClientId = id; render(); }
-function closeDetail(){ openClientId = null; render(); }
 function openConfig(){ showConfig = true; render(); }
 function closeConfig(){ showConfig = false; render(); }
 
