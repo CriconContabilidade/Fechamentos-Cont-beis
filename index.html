@@ -127,6 +127,16 @@ select{
 .filter-bar select{padding:8px 10px;border:1.5px solid var(--rule-strong);border-radius:3px;background:var(--paper-raised);font-size:12.5px;}
 .filter-bar .spacer{flex:1;}
 .filter-bar .export-group{display:flex;gap:8px;margin-left:auto;}
+.resp-summary{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px;}
+.resp-chip{background:var(--paper-raised);border:1px solid var(--rule-strong);border-radius:4px;padding:8px 12px;min-width:160px;text-align:left;font:inherit;color:inherit;}
+button.resp-chip{cursor:pointer;}
+button.resp-chip:hover{border-color:var(--ink);}
+.resp-chip.active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
+.resp-chip.total{background:transparent;border-style:dashed;}
+.resp-chip .rc-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:600;}
+.resp-chip .rc-bar{height:5px;background:var(--rule);border-radius:3px;margin:6px 0 4px;overflow:hidden;}
+.resp-chip .rc-bar div{height:100%;background:var(--ink);}
+.resp-chip .rc-sub{font-size:11px;color:var(--ink-soft);}
 
 /* stamp */
 .stamp{
@@ -717,6 +727,48 @@ function setFilterStatus(value){ filterStatus = value; render(); }
 function setFilterRegime(value){ filterRegime = value; render(); }
 function setFilterResponsible(value){ filterResponsible = value; render(); }
 function setSortBy(value){ sortBy = value; render(); }
+// 1ª etapa = execução do checklist (status "pendente"); depois que o cliente sai de
+// "pendente" essa etapa conta como 100% concluída.
+function stage1Pct(c){
+  if(c.status!=='pendente') return 100;
+  const total = c.checklist.length || 1;
+  return 100*c.checklist.filter(i=>i.done).length/total;
+}
+function getResponsibleSummary(){
+  const map = {};
+  config.clients.forEach(cl=>{
+    const key = cl.responsible || '__none__';
+    const c = getClosing(cl.id);
+    const e = map[key] || (map[key] = {key, name: cl.responsible || 'Sem responsável', n:0, sum:0, done:0});
+    e.n++; e.sum += stage1Pct(c); if(c.status!=='pendente') e.done++;
+  });
+  const list = Object.values(map).map(e=>({...e, pct: Math.round(e.sum/e.n)}));
+  list.sort((a,b)=> a.key==='__none__' ? 1 : b.key==='__none__' ? -1 : a.name.localeCompare(b.name));
+  return list;
+}
+function toggleRespFilter(i){
+  const s = getResponsibleSummary()[i];
+  if(!s) return;
+  filterResponsible = (filterResponsible===s.key) ? '' : s.key;
+  render();
+}
+function respSummaryHtml(){
+  const list = getResponsibleSummary();
+  if(!list.length) return '';
+  const totalN = list.reduce((a,e)=>a+e.n,0);
+  const totalSum = list.reduce((a,e)=>a+e.sum,0);
+  const totalDone = list.reduce((a,e)=>a+e.done,0);
+  const totalPct = Math.round(totalSum/totalN);
+  const chip = (tag, cls, name, p, done, n, extra)=>`<${tag} class="resp-chip ${cls}" ${extra}>
+      <div class="rc-top"><span>${escapeHtml(name)}</span><span>${p}%</span></div>
+      <div class="rc-bar"><div style="width:${p}%"></div></div>
+      <div class="rc-sub">${done} de ${n} cliente(s) com a 1ª etapa concluída</div>
+    </${tag}>`;
+  return `<div class="resp-summary" title="1ª etapa = execução do checklist (antes da conferência)">`
+    + chip('div','total','Total do escritório',totalPct,totalDone,totalN,'')
+    + list.map((e,i)=>chip('button', filterResponsible===e.key?'active':'', e.name, e.pct, e.done, e.n, `type="button" onclick="toggleRespFilter(${i})"`)).join('')
+    + `</div>`;
+}
 function setCfgClientSearch(value){ cfgClientSearch = value; render(); }
 function setCfgClientSort(value){ cfgClientSort = value; render(); }
 
@@ -1163,6 +1215,7 @@ function render(){
         <button class="btn ghost small" onclick="printReport(event)">Imprimir / PDF</button>
       </div>
     </div>`;
+    html += respSummaryHtml();
 
     const filteredList = getFilteredSortedClients();
     html += `<div class="ledger">
