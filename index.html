@@ -460,7 +460,9 @@ table.rank tr:last-child td{border-bottom:none;}
 .hm{display:inline-block;min-width:46px;padding:5px 6px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(79,107,255,calc((var(--v) - 40) / 60 + .08));color:#fff;}
 
 
-.modal.cfg-tab-resp .cfg-block:not([data-tab="resp"]),.modal.cfg-tab-emp .cfg-block:not([data-tab="emp"]),.modal.cfg-tab-check .cfg-block:not([data-tab="check"]){display:none;}
+.modal.cfg-tab-resp .cfg-block:not([data-tab="resp"]),.modal.cfg-tab-emp .cfg-block:not([data-tab="emp"]),.modal.cfg-tab-check .cfg-block:not([data-tab="check"]),.modal.cfg-tab-enc .cfg-block:not([data-tab="enc"]){display:none;}
+.start-lbl{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;}
+.start-lbl input{background:rgba(255,255,255,.04);border:1px solid var(--panel-border);border-radius:8px;color:var(--ink);padding:5px 8px;font-family:inherit;color-scheme:dark;}
 .modal .rtabs{margin-bottom:16px;}
 @media print{ body{background:#fff !important;} .bg-fx,.stars{display:none !important;} }
 @media (max-width:640px){
@@ -687,6 +689,10 @@ async function loadAll(){
     config = { officeName: "Contabilidade Cricon", teamMembers: [], clients: [], checklistTemplate: DEFAULT_CHECKLIST.slice() };
   }
   if(!config.memberEmails) config.memberEmails = {};
+  const defaultStart = new Date().getFullYear() + '-01';
+  let migrated = false;
+  config.clients.forEach(c=>{ if(!c.startMonth){ c.startMonth = defaultStart; migrated = true; } });
+  if(migrated) saveConfig();
   const emailKey = (window.__fbUser && window.__fbUser.email) ? window.__fbUser.email.toLowerCase() : null;
   if(emailKey && config.memberEmails[emailKey] && config.teamMembers.includes(config.memberEmails[emailKey])){
     currentUser = config.memberEmails[emailKey];
@@ -849,9 +855,38 @@ async function reopenClosing(clientId){
   render(); saveMonth();
 }
 
+// Visível na lista do mês: não encerrada e já iniciada naquele mês.
+function clientActive(cl, key){ return !cl.closed && (!cl.startMonth || cl.startMonth <= key); }
+function visibleClients(key){ return config.clients.filter(cl=>clientActive(cl, key)); }
+// Conta no ranking do mês: dentro do período [início, encerramento].
+function clientCounts(cl, key){ return (!cl.startMonth || cl.startMonth <= key) && (!cl.endMonth || key <= cl.endMonth); }
+function isMonthKey(v){ return /^\d{4}-(0[1-9]|1[0-2])$/.test(v); }
+async function updateClientStart(id, value){
+  const cl = config.clients.find(c=>c.id===id);
+  if(!cl || !isMonthKey(value)) return;
+  cl.startMonth = value;
+  render(); saveConfig();
+}
+async function closeCompany(id){
+  const cl = config.clients.find(c=>c.id===id);
+  if(!cl) return;
+  const v = prompt(`Encerrar "${cl.name}".\nInforme o ÚLTIMO mês com fechamento (AAAA-MM). O ranking conta a empresa só até esse mês, e ela sai da lista de fechamentos e dos cadastros atuais:`, shiftMonth(currentMonthKey, -1));
+  if(v===null) return;
+  if(!isMonthKey(v.trim())){ alert('Mês inválido. Use o formato AAAA-MM, por exemplo 2026-09.'); return; }
+  cl.closed = true; cl.endMonth = v.trim();
+  if(openClientId===id) openClientId = null;
+  render(); saveConfig();
+}
+async function reopenCompany(id){
+  const cl = config.clients.find(c=>c.id===id);
+  if(!cl) return;
+  if(!confirm(`Reativar "${cl.name}"? Ela volta para a lista de fechamentos e para os cadastros atuais.`)) return;
+  cl.closed = false; delete cl.endMonth;
+  render(); saveConfig();
+}
 async function addClient(name){
   if(!name.trim()) return;
-  config.clients.push({id: uid('cl'), name: name.trim(), taxRegime: '', responsible: ''});
+  config.clients.push({id: uid('cl'), name: name.trim(), taxRegime: '', responsible: '', startMonth: currentMonthKey});
   render(); saveConfig();
 }
 async function updateClientName(id, value){
@@ -887,7 +922,7 @@ function stage1Pct(c){
 const RESP_SUMMARY_HIDE = ['jache'];
 function getResponsibleSummary(){
   const map = {};
-  config.clients.forEach(cl=>{
+  visibleClients(currentMonthKey).forEach(cl=>{
     const key = cl.responsible || '__none__';
     const c = getClosing(cl.id);
     const e = map[key] || (map[key] = {key, name: cl.responsible || 'Sem responsável', n:0, sum:0, done:0});
@@ -925,7 +960,7 @@ function setCfgClientSearch(value){ cfgClientSearch = value; render(); }
 function setCfgClientSort(value){ cfgClientSort = value; render(); }
 
 function getCfgClients(){
-  let list = config.clients.slice();
+  let list = config.clients.filter(c=>!c.closed);
   const q = cfgClientSearch.trim().toLowerCase();
   if(q){
     list = list.filter(c=>
@@ -945,7 +980,7 @@ function getCfgClients(){
 }
 
 function getFilteredSortedClients(){
-  let list = config.clients.map(cl=>({ cl, c: getClosing(cl.id) }));
+  let list = visibleClients(currentMonthKey).map(cl=>({ cl, c: getClosing(cl.id) }));
   if(filterSearch.trim()){
     const q = filterSearch.trim().toLowerCase();
     list = list.filter(x=>x.cl.name.toLowerCase().includes(q));
@@ -1197,7 +1232,7 @@ function handleImportClientsFile(event){
         taxRegime = match || regimeRaw;
       }
 
-      config.clients.push({id: uid('cl'), name, taxRegime, responsible});
+      config.clients.push({id: uid('cl'), name, taxRegime, responsible, startMonth: currentMonthKey});
       added++;
     });
     if(added>0){ render(); saveConfig(); }
@@ -1549,32 +1584,35 @@ function computeRankData(){
     catch(e){ parsed[k] = {}; }
   });
   const rank = e => e ? (STATUS_ORDER[e.status] || 0) : 0;
+  // Cada empresa só conta nos meses entre o início e o encerramento (mês fora do período = -1).
   const clients = config.clients.map(cl=>{
-    const s = [0,0,0];
+    const s = [0,0,0]; let n = 0;
     const monthly = keys.map(k=>{
+      if(!clientCounts(cl, k)) return -1;
+      n++;
       const r = rank(parsed[k][cl.id]);
       if(r>=1) s[0]++; if(r>=2) s[1]++; if(r>=3) s[2]++;
       return r;
     });
-    return { cl, s, monthly };
-  });
+    return { cl, s, monthly, n };
+  }).filter(x=>x.n>0);
   const byResp = {};
   clients.forEach(x=>{
     const key = x.cl.responsible || '__none__';
-    const e = byResp[key] || (byResp[key] = { key, name:x.cl.responsible || 'Sem responsável', nClients:0, s:[0,0,0], monthS:keys.map(()=>[0,0,0]) });
-    e.nClients++;
+    const e = byResp[key] || (byResp[key] = { key, name:x.cl.responsible || 'Sem responsável', nClients:0, tot:0, s:[0,0,0], monthS:keys.map(()=>[0,0,0]), monthN:keys.map(()=>0) });
+    e.nClients++; e.tot += x.n;
     x.s.forEach((v,i)=>{ e.s[i]+=v; });
-    x.monthly.forEach((r,mi)=>{ for(let st=0; st<3; st++){ if(r>=st+1) e.monthS[mi][st]++; } });
+    x.monthly.forEach((r,mi)=>{
+      if(r<0) return;
+      e.monthN[mi]++;
+      for(let st=0; st<3; st++){ if(r>=st+1) e.monthS[mi][st]++; }
+    });
   });
   const hidden = n => RESP_SUMMARY_HIDE.some(h=>n.toLowerCase().startsWith(h));
   const resp = Object.values(byResp).filter(e=>!hidden(e.name)).map(e=>{
-    const tot = e.nClients * keys.length;
-    const p = e.s.map(v=> tot ? Math.round(100*v/tot) : 0);
-    const monthly = e.monthS.map(ms=>{
-      if(!e.nClients) return 0;
-      return Math.round(100*(ms[0]+ms[1]+ms[2])/(3*e.nClients));
-    });
-    return { name:e.name, key:e.key, nClients:e.nClients, tot, counts:e.s, p, geral: Math.round((p[0]+p[1]+p[2])/3), monthly };
+    const p = e.s.map(v=> e.tot ? Math.round(100*v/e.tot) : 0);
+    const monthly = e.monthS.map((ms,mi)=> e.monthN[mi] ? Math.round(100*(ms[0]+ms[1]+ms[2])/(3*e.monthN[mi])) : null);
+    return { name:e.name, key:e.key, nClients:e.nClients, tot:e.tot, counts:e.s, p, geral: Math.round((p[0]+p[1]+p[2])/3), monthly };
   });
   return { keys, clients, resp };
 }
@@ -1612,7 +1650,7 @@ function rankViewHtml(){
       <table class="rank"><thead><tr><th>#</th><th>Responsável</th>${stageNames.map(n=>`<th>${n}</th>`).join('')}<th>Geral</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="rsm" style="margin-top:10px">% de fechamentos (empresa × mês) que chegaram ao fim de cada etapa. Geral = média das três etapas.</p></div>`;
   } else if(rankTab==='mes'){
-    const rows = d.resp.slice().sort((a,b)=>b.geral-a.geral).map(r=>`<tr><td><b>${escapeHtml(r.name)}</b></td>${r.monthly.map(v=>`<td><span class="hm" style="--v:${v}">${v}%</span></td>`).join('')}</tr>`).join('');
+    const rows = d.resp.slice().sort((a,b)=>b.geral-a.geral).map(r=>`<tr><td><b>${escapeHtml(r.name)}</b></td>${r.monthly.map(v=> v===null ? `<td><span class="rsm">—</span></td>` : `<td><span class="hm" style="--v:${v}">${v}%</span></td>`).join('')}</tr>`).join('');
     body = `<div class="rcard"><h4>Evolução por mês · % geral concluído</h4>
       <table class="rank hmt"><thead><tr><th>Responsável</th>${d.keys.map((k,i)=>`<th>${MONTH_ABBR[i]}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
       <p class="rsm" style="margin-top:10px">Cada célula = % das empresas do responsável que concluíram as etapas naquele mês (média das três). Mais forte = melhor.</p></div>`;
@@ -1625,9 +1663,8 @@ function rankViewHtml(){
   } else {
     const hidden = n => RESP_SUMMARY_HIDE.some(h=>(n||'').toLowerCase().startsWith(h));
     const list = d.clients.filter(x=>!hidden(x.cl.responsible)).slice().sort((a,b)=> (b.s[2]-a.s[2]) || (b.s[1]-a.s[1]) || (b.s[0]-a.s[0]) || a.cl.name.localeCompare(b.cl.name));
-    const n = d.keys.length;
-    const rows = list.map((x,i)=>`<tr>${rkPos(i)}<td><b>${escapeHtml(x.cl.name)}</b></td><td class="rsm">${escapeHtml(x.cl.responsible||'—')}</td>
-      <td>${rkBar(Math.round(100*x.s[2]/n), x.s[2]+'/'+n+' meses')}</td>
+    const rows = list.map((x,i)=>`<tr>${rkPos(i)}<td><b>${escapeHtml(x.cl.name)}</b>${x.cl.closed?' <span class="rsm">(encerrada)</span>':''}</td><td class="rsm">${escapeHtml(x.cl.responsible||'—')}</td>
+      <td>${rkBar(Math.round(100*x.s[2]/x.n), x.s[2]+'/'+x.n+' meses')}</td>
       <td class="rsm">${x.s[0]} · ${x.s[1]} · ${x.s[2]}</td></tr>`).join('');
     body = `<div class="rcard"><h4>Empresas com fechamento concluído · janeiro até o mês anterior</h4>
       <table class="rank"><thead><tr><th>#</th><th>Empresa</th><th>Responsável</th><th>Meses concluídos</th><th>Por etapa (1ª · 2ª · 3ª)</th></tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -1648,6 +1685,7 @@ function renderConfigModal(){
       <div class="rtabs sub">
         <button class="rt ${cfgTab==='resp'?'on':''}" onclick="setCfgTab('resp')">👤 Responsáveis</button>
         <button class="rt ${cfgTab==='emp'?'on':''}" onclick="setCfgTab('emp')">🏢 Empresas</button>
+        <button class="rt ${cfgTab==='enc'?'on':''}" onclick="setCfgTab('enc')">🚪 Empresas Encerradas</button>
         <button class="rt ${cfgTab==='check'?'on':''}" onclick="setCfgTab('check')">✅ Checklist e escritório</button>
       </div>
       <div class="cfg-block" data-tab="check">
@@ -1667,7 +1705,7 @@ function renderConfigModal(){
       </div>
 
       <div class="cfg-block" data-tab="emp">
-        <h3>Clientes</h3>
+        <h3>Empresas</h3>
         <div class="cfg-filter-row">
           <input type="text" id="cfgClientSearchInput" placeholder="Buscar por nome, tributação ou responsável…" value="${escapeHtml(cfgClientSearch)}" oninput="setCfgClientSearch(this.value)">
           <select onchange="setCfgClientSort(this.value)">
@@ -1677,7 +1715,7 @@ function renderConfigModal(){
             <option value="responsible" ${cfgClientSort==='responsible'?'selected':''}>Ordenar: Responsável</option>
           </select>
         </div>
-        <div class="hint" style="margin-bottom:8px;">${getCfgClients().length} de ${config.clients.length} cliente(s)</div>
+        <div class="hint" style="margin-bottom:8px;">${getCfgClients().length} de ${config.clients.filter(c=>!c.closed).length} empresa(s)</div>
         <div class="cfg-list">
           ${getCfgClients().map(c=>`<div class="cfg-client-item">
             <div class="cfg-item">
@@ -1694,7 +1732,11 @@ function renderConfigModal(){
                 ${config.teamMembers.map(m=>`<option value="${escapeHtml(m)}" ${c.responsible===m?'selected':''}>${escapeHtml(m)}</option>`).join('')}
               </select>
             </div>
-          </div>`).join('') || `<div style="font-size:12.5px;color:var(--ink-soft);">${config.clients.length ? 'Nenhum cliente encontrado.' : 'Nenhum cliente ainda.'}</div>`}
+            <div class="cfg-client-selects" style="margin-top:6px;align-items:center;">
+              <label class="start-lbl">Início do fechamento: <input type="month" value="${escapeHtml(c.startMonth||'')}" onchange="updateClientStart('${c.id}', this.value)"></label>
+              <button class="btn ghost small" style="margin-left:auto" onclick="closeCompany('${c.id}')">Encerrar empresa</button>
+            </div>
+          </div>`).join('') || `<div style="font-size:12.5px;color:var(--ink-soft);">${config.clients.some(c=>!c.closed) ? 'Nenhuma empresa encontrada.' : 'Nenhuma empresa ainda.'}</div>`}
         </div>
         <div class="add-row">
           <input type="text" id="newClientInput" placeholder="Nome do cliente">
@@ -1704,6 +1746,21 @@ function renderConfigModal(){
           <input type="file" id="importClientsFile" accept=".txt,text/plain" style="display:none" onchange="handleImportClientsFile(event)">
           <button class="btn ghost small" onclick="document.getElementById('importClientsFile').click()">Importar lista (.txt)</button>
           <span class="hint-inline">uma empresa por linha: Nome;Responsável;Tributação</span>
+        </div>
+      </div>
+
+      <div class="cfg-block" data-tab="enc">
+        <h3>Empresas Encerradas</h3>
+        <div class="hint" style="margin-bottom:8px;">Não aparecem na lista de fechamentos nem nos cadastros atuais. O ranking conta cada uma só do início até o mês de encerramento.</div>
+        <div class="cfg-list">
+          ${config.clients.filter(c=>c.closed).sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<div class="cfg-client-item">
+            <div class="cfg-item">
+              <input type="text" value="${escapeHtml(c.name)}" disabled>
+              <button class="btn ghost small" onclick="reopenCompany('${c.id}')">Reativar</button>
+              <button class="del" title="Remover definitivamente" onclick="removeClient('${c.id}')">✕</button>
+            </div>
+            <div class="hint-inline">${escapeHtml(c.responsible||'Sem responsável')} · ${escapeHtml(c.taxRegime||'Tributação não informada')} · de ${escapeHtml(monthKeyToAbbr(c.startMonth||c.endMonth))} até ${escapeHtml(monthKeyToAbbr(c.endMonth||c.startMonth))}</div>
+          </div>`).join('') || '<div style="font-size:12.5px;color:var(--ink-soft);">Nenhuma empresa encerrada.</div>'}
         </div>
       </div>
 
