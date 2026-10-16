@@ -459,6 +459,9 @@ table.rank tr:last-child td{border-bottom:none;}
 .hmt td:first-child,.hmt th:first-child{text-align:left;}
 .hm{display:inline-block;min-width:46px;padding:5px 6px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(79,107,255,calc((var(--v) - 40) / 60 + .08));color:#fff;}
 
+
+.modal.cfg-tab-resp .cfg-block:not([data-tab="resp"]),.modal.cfg-tab-emp .cfg-block:not([data-tab="emp"]),.modal.cfg-tab-check .cfg-block:not([data-tab="check"]){display:none;}
+.modal .rtabs{margin-bottom:16px;}
 @media print{ body{background:#fff !important;} .bg-fx,.stars{display:none !important;} }
 @media (max-width:640px){
   .check .line{flex-wrap:wrap;}
@@ -603,6 +606,7 @@ let filterStatus = "";
 let filterRegime = "";
 let filterResponsible = "";
 let sortBy = "name";
+let cfgTab = 'resp';
 let cfgClientSearch = "";
 let cfgClientSort = "name";
 let cascadeEnabled = false;
@@ -916,6 +920,7 @@ function respSummaryHtml(){
     + list.map((e,i)=> RESP_SUMMARY_HIDE.some(h=>e.name.toLowerCase().startsWith(h)) ? '' : chip('button', filterResponsible===e.key?'active':'', e.name, e.pct, e.done, e.n, `type="button" onclick="toggleRespFilter(${i})"`)).join('')
     + `</div>`;
 }
+function setCfgTab(t){ cfgTab = t; render(); }
 function setCfgClientSearch(value){ cfgClientSearch = value; render(); }
 function setCfgClientSort(value){ cfgClientSort = value; render(); }
 
@@ -1330,7 +1335,7 @@ function topbarHtml(){
     </div>
     <div class="top-controls">
       <button class="pill rank" onclick="openRank()">🏆 Ranking</button>
-      <button class="icon-btn" onclick="openConfig()" title="Configurações">⚙</button>
+      <button class="pill" onclick="openConfig()" title="Cadastrar responsáveis e empresas">📇 Cadastros</button>
       <button class="icon-btn" onclick="handleLogout()" title="Sair">⏻</button>
     </div>
   </div>`;
@@ -1353,7 +1358,7 @@ function mainBodyHtml(){
   if(config.clients.length===0){
     return html + `<div class="ledger"><div class="empty-state">
       <h3>Nenhum cliente cadastrado</h3>
-      <p>Abra as configurações (⚙) para cadastrar os clientes do escritório e a equipe.</p>
+      <p>Abra os Cadastros (📇) para cadastrar os clientes do escritório e a equipe.</p>
       <button class="btn" onclick="openConfig()">Abrir configurações</button>
     </div></div>`;
   }
@@ -1634,18 +1639,23 @@ function renderConfigModal(){
   const overlay = document.createElement('div');
   overlay.className = 'overlay';
   overlay.onclick = (e)=>{ if(e.target===overlay) closeConfig(); };
-  overlay.innerHTML = `<div class="modal">
+  overlay.innerHTML = `<div class="modal cfg-tab-${cfgTab}">
     <div class="modal-head">
-      <div><h2>Configurações</h2><div class="meta">Escritório, equipe e checklist</div></div>
+      <div><h2>Cadastros</h2><div class="meta">Responsáveis, empresas e checklist</div></div>
       <button class="close-x" onclick="closeConfig()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="cfg-block">
+      <div class="rtabs sub">
+        <button class="rt ${cfgTab==='resp'?'on':''}" onclick="setCfgTab('resp')">👤 Responsáveis</button>
+        <button class="rt ${cfgTab==='emp'?'on':''}" onclick="setCfgTab('emp')">🏢 Empresas</button>
+        <button class="rt ${cfgTab==='check'?'on':''}" onclick="setCfgTab('check')">✅ Checklist e escritório</button>
+      </div>
+      <div class="cfg-block" data-tab="check">
         <h3>Nome do escritório</h3>
         <input type="text" value="${escapeHtml(config.officeName)}" onchange="updateOfficeName(this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--rule-strong);border-radius:3px;">
       </div>
 
-      <div class="cfg-block">
+      <div class="cfg-block" data-tab="resp">
         <h3>Equipe</h3>
         <div class="cfg-list">
           ${config.teamMembers.map(m=>`<div class="cfg-item"><input type="text" value="${escapeHtml(m)}" disabled><button class="del" onclick="removeMember('${escapeHtml(m).replace(/'/g,"\\'")}')">✕</button></div>`).join('') || '<div style="font-size:12.5px;color:var(--ink-soft);">Nenhum integrante ainda.</div>'}
@@ -1656,7 +1666,7 @@ function renderConfigModal(){
         </div>
       </div>
 
-      <div class="cfg-block">
+      <div class="cfg-block" data-tab="emp">
         <h3>Clientes</h3>
         <div class="cfg-filter-row">
           <input type="text" id="cfgClientSearchInput" placeholder="Buscar por nome, tributação ou responsável…" value="${escapeHtml(cfgClientSearch)}" oninput="setCfgClientSearch(this.value)">
@@ -1697,7 +1707,7 @@ function renderConfigModal(){
         </div>
       </div>
 
-      <div class="cfg-block">
+      <div class="cfg-block" data-tab="check">
         <h3>Checklist padrão de fechamento</h3>
         <div class="cfg-list">
           ${config.checklistTemplate.map((t,i)=>{
