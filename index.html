@@ -338,7 +338,8 @@ select option{background:#0b0f1e;color:#e8edfb;}
 .pill:hover{border-color:var(--accent2);color:var(--ink);}
 .pill.rank{background:var(--accent-grad);border-color:transparent;color:#fff;font-weight:700;}
 
-.topbar{border-bottom:1px solid var(--panel-border);}
+.topbar{border-bottom:1px solid var(--panel-border);position:sticky;top:0;z-index:30;background:rgba(6,10,24,.88);backdrop-filter:blur(12px);margin:-28px -20px 22px;padding:18px 20px;}
+@media print{.topbar{position:static;}}
 .brand{display:flex;align-items:center;gap:12px;}
 .brand .orb{width:44px;height:44px;border-radius:50%;background:#f4efe9;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .brand .orb svg{width:27px;height:auto;}
