@@ -127,16 +127,16 @@ select{
 .filter-bar select{padding:8px 10px;border:1.5px solid var(--rule-strong);border-radius:3px;background:var(--paper-raised);font-size:12.5px;}
 .filter-bar .spacer{flex:1;}
 .filter-bar .export-group{display:flex;gap:8px;margin-left:auto;}
-.resp-summary{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px;}
-.resp-chip{background:var(--paper-raised);border:1px solid var(--rule-strong);border-radius:4px;padding:8px 12px;min-width:160px;text-align:left;font:inherit;color:inherit;}
+.resp-summary{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px;}
+.resp-chip{background:var(--paper-raised);border:1px solid var(--rule-strong);border-radius:3px;padding:4px 8px;min-width:110px;text-align:left;font:inherit;color:inherit;}
 button.resp-chip{cursor:pointer;}
 button.resp-chip:hover{border-color:var(--ink);}
 .resp-chip.active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
 .resp-chip.total{background:transparent;border-style:dashed;}
-.resp-chip .rc-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:600;}
-.resp-chip .rc-bar{height:5px;background:var(--rule);border-radius:3px;margin:6px 0 4px;overflow:hidden;}
+.resp-chip .rc-top{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:600;}
+.resp-chip .rc-bar{height:3px;background:var(--rule);border-radius:2px;margin:3px 0 2px;overflow:hidden;}
 .resp-chip .rc-bar div{height:100%;background:var(--ink);}
-.resp-chip .rc-sub{font-size:11px;color:var(--ink-soft);}
+.resp-chip .rc-sub{font-size:10px;color:var(--ink-soft);}
 
 /* stamp */
 .stamp{
@@ -734,6 +734,7 @@ function stage1Pct(c){
   const total = c.checklist.length || 1;
   return 100*c.checklist.filter(i=>i.done).length/total;
 }
+const RESP_SUMMARY_HIDE = ['jache'];
 function getResponsibleSummary(){
   const map = {};
   config.clients.forEach(cl=>{
@@ -762,11 +763,11 @@ function respSummaryHtml(){
   const chip = (tag, cls, name, p, done, n, extra)=>`<${tag} class="resp-chip ${cls}" ${extra}>
       <div class="rc-top"><span>${escapeHtml(name)}</span><span>${p}%</span></div>
       <div class="rc-bar"><div style="width:${p}%"></div></div>
-      <div class="rc-sub">${done} de ${n} cliente(s) com a 1ª etapa concluída</div>
+      <div class="rc-sub">${done}/${n} Clientes concluídos</div>
     </${tag}>`;
   return `<div class="resp-summary" title="1ª etapa = execução do checklist (antes da conferência)">`
     + chip('div','total','Total do escritório',totalPct,totalDone,totalN,'')
-    + list.map((e,i)=>chip('button', filterResponsible===e.key?'active':'', e.name, e.pct, e.done, e.n, `type="button" onclick="toggleRespFilter(${i})"`)).join('')
+    + list.map((e,i)=> RESP_SUMMARY_HIDE.some(h=>e.name.toLowerCase().startsWith(h)) ? '' : chip('button', filterResponsible===e.key?'active':'', e.name, e.pct, e.done, e.n, `type="button" onclick="toggleRespFilter(${i})"`)).join('')
     + `</div>`;
 }
 function setCfgClientSearch(value){ cfgClientSearch = value; render(); }
