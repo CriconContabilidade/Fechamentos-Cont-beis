@@ -707,6 +707,13 @@ async function loadMonth(key){
   try{
     const raw = await window.__fbGet('month:'+key);
     monthData = raw ? JSON.parse(raw) : {};
+    // etapa "Em conferência" foi removida: registros antigos vão direto para a revisão final
+    Object.values(monthData).forEach(e=>{
+      if(e && e.status==='em_conferencia'){
+        e.status = 'revisao_final';
+        if(e.checklist) e.checklist.forEach(i=>{ i.done = true; });
+      }
+    });
   }catch(e){
     console.error(e);
     monthData = {};
@@ -748,13 +755,10 @@ function pct(closing){
   if(stage==='pendente'){
     return Math.round(100*closing.checklist.filter(i=>i.done).length/total);
   }
-  if(stage==='em_conferencia'){
-    return Math.round(100*closing.checklist.filter(i=>i.confDone).length/total);
-  }
   return 100;
 }
 
-const STAGE_LABELS = {pendente:'Pendente', em_conferencia:'Em conferência', revisao_final:'Revisão final', concluido:'Concluído'};
+const STAGE_LABELS = {pendente:'Pendente', revisao_final:'Revisão final', concluido:'Concluído'};
 
 /* ---------- actions ---------- */
 async function toggleItem(clientId, itemId, field){
@@ -785,7 +789,7 @@ async function toggleAllItems(clientId, field){
   saveMonth();
 }
 
-const STATUS_ORDER = {pendente:0, em_conferencia:1, revisao_final:2, concluido:3};
+const STATUS_ORDER = {pendente:0, em_conferencia:1, revisao_final:1, concluido:2};
 
 async function cascadePreviousMonths(clientId, targetStatus){
   const targetRank = STATUS_ORDER[targetStatus];
@@ -809,11 +813,10 @@ async function cascadePreviousMonths(clientId, targetStatus){
         executor:null, executedAt:null, conferente:null, conferidoAt:null, aprovador:null, finalizadoAt:null, history:[]
       };
     }
-    entry.checklist.forEach(it=>{ it.done = true; if(targetRank>=2) it.confDone = true; });
+    entry.checklist.forEach(it=>{ it.done = true; });
     entry.status = targetStatus;
     if(targetRank>=1 && !entry.executor){ entry.executor = currentUser; entry.executedAt = nowStr(); }
-    if(targetRank>=2 && !entry.conferente){ entry.conferente = currentUser; entry.conferidoAt = nowStr(); }
-    if(targetRank>=3){ entry.aprovador = currentUser; entry.finalizadoAt = nowStr(); }
+    if(targetRank>=2){ entry.aprovador = currentUser; entry.finalizadoAt = nowStr(); }
     entry.history = entry.history || [];
     entry.history.push({t: nowStr(), who: currentUser, what: `Atualizado automaticamente em lote a partir do fechamento de ${monthLabel(currentMonthKey)}`});
     data[clientId] = entry;
@@ -823,19 +826,11 @@ async function cascadePreviousMonths(clientId, targetStatus){
   return updated;
 }
 
-async function sendToConference(clientId){
+async function sendToFinalReview(clientId){
   const c = getClosing(clientId);
   if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
-  c.status='em_conferencia'; c.executor=currentUser; c.executedAt=nowStr();
-  c.history.push({t:nowStr(), who:currentUser, what:'Enviou para conferência'});
-  render(); saveMonth();
-  if(cascadeEnabled){ cascadePreviousMonths(clientId, 'em_conferencia'); }
-}
-async function approveConference(clientId){
-  const c = getClosing(clientId);
-  if(!currentUser){ alert('Selecione seu nome antes de continuar.'); return; }
-  c.status='revisao_final'; c.conferente=currentUser; c.conferidoAt=nowStr();
-  c.history.push({t:nowStr(), who:currentUser, what:'Aprovou a conferência'});
+  c.status='revisao_final'; c.executor=currentUser; c.executedAt=nowStr();
+  c.history.push({t:nowStr(), who:currentUser, what:'Concluiu o fechamento inicial e enviou para revisão final'});
   render(); saveMonth();
   if(cascadeEnabled){ cascadePreviousMonths(clientId, 'revisao_final'); }
 }
@@ -852,6 +847,7 @@ async function reopenClosing(clientId){
   const c = getClosing(clientId);
   c.status='pendente';
   c.checklist.forEach(i=>{i.done=false; i.confDone=false;});
+  c.conferente = null; c.conferidoAt = null;
   c.history.push({t:nowStr(), who:currentUser||'—', what:'Reabriu o fechamento'});
   render(); saveMonth();
 }
@@ -951,7 +947,7 @@ function respSummaryHtml(){
       <div class="rc-bar"><div style="width:${p}%"></div></div>
       <div class="rc-sub">${done}/${n} Clientes concluídos</div>
     </${tag}>`;
-  return `<div class="resp-summary" title="1ª etapa = execução do checklist (antes da conferência)">`
+  return `<div class="resp-summary" title="1ª etapa = fechamento inicial (execução do checklist, antes da revisão final)">`
     + chip('div','total','Total do escritório',totalPct,totalDone,totalN,'')
     + list.map((e,i)=> RESP_SUMMARY_HIDE.some(h=>e.name.toLowerCase().startsWith(h)) ? '' : chip('button', filterResponsible===e.key?'active':'', e.name, e.pct, e.done, e.n, `type="button" onclick="toggleRespFilter(${i})"`)).join('')
     + `</div>`;
@@ -997,7 +993,7 @@ function getFilteredSortedClients(){
     if(filterResponsible==='__none__'){ list = list.filter(x=>!x.cl.responsible); }
     else{ list = list.filter(x=>x.cl.responsible===filterResponsible); }
   }
-  const statusOrder = {pendente:0, em_conferencia:1, revisao_final:2, concluido:3};
+  const statusOrder = STATUS_ORDER;
   list.sort((a,b)=>{
     if(sortBy==='regime') return (a.cl.taxRegime||'\uffff').localeCompare(b.cl.taxRegime||'\uffff') || a.cl.name.localeCompare(b.cl.name);
     if(sortBy==='status') return (statusOrder[a.c.status]-statusOrder[b.c.status]) || a.cl.name.localeCompare(b.cl.name);
@@ -1404,7 +1400,6 @@ function mainBodyHtml(){
     <select onchange="setFilterStatus(this.value)">
       <option value="">Todos os status</option>
       <option value="pendente" ${filterStatus==='pendente'?'selected':''}>Pendente</option>
-      <option value="em_conferencia" ${filterStatus==='em_conferencia'?'selected':''}>Em conferência</option>
       <option value="revisao_final" ${filterStatus==='revisao_final'?'selected':''}>Revisão final</option>
       <option value="concluido" ${filterStatus==='concluido'?'selected':''}>Concluído</option>
     </select>
@@ -1440,8 +1435,7 @@ function mainBodyHtml(){
       const p = pct(c);
       const hasNotes = c.checklist.some(i=>i.note && i.note.trim());
       const assignee = c.status==='pendente' ? (c.checklist.some(i=>i.done)? 'em andamento' : '') :
-                        c.status==='em_conferencia' ? ('executado por '+c.executor) :
-                        c.status==='revisao_final' ? ('conferido por '+c.conferente) :
+                        c.status==='revisao_final' ? ('executado por '+c.executor) :
                         ('aprovado por '+c.aprovador);
       const isOpen = openClientId===cl.id;
       html += `<div class="ledger-row ${isOpen?'open':''}" onclick="toggleDetail('${cl.id}')">
@@ -1467,16 +1461,14 @@ function toggleGuide(btn, key){
 }
 
 function detailHtml(cl, c){
-  const stageOrder = ['pendente','em_conferencia','revisao_final','concluido'];
+  const stageOrder = ['pendente','revisao_final','concluido'];
   const stageIdx = stageOrder.indexOf(c.status);
   const total = c.checklist.length || 1;
   const nDone = c.checklist.filter(i=>i.done).length;
-  const nConf = c.checklist.filter(i=>i.confDone).length;
 
   const stageDefs = [
-    { label:'1 · Fechamento',   who:c.executor,  cur:`em andamento — ${nDone} de ${total} itens`, doneTxt:'concluído' },
-    { label:'2 · Conferência',  who:c.conferente, cur:`em andamento — ${nConf} de ${total} itens`, doneTxt:'concluída' },
-    { label:'3 · Revisão final', who:c.aprovador, cur:'aguardando finalização', doneTxt:'finalizado' }
+    { label:'1 · Fechamento inicial', who:c.executor,  cur:`em andamento — ${nDone} de ${total} itens`, doneTxt:'concluído' },
+    { label:'2 · Revisão final', who:c.aprovador, cur:'aguardando finalização', doneTxt:'finalizada' }
   ];
   const stagesHtml = stageDefs.map((s,i)=>{
     let cls = 'stage', txt = 'aguardando';
@@ -1486,13 +1478,12 @@ function detailHtml(cl, c){
   }).join('');
 
   const locked = c.status==='concluido';
-  const field = c.status==='pendente' ? 'done' : (c.status==='em_conferencia' ? 'confDone' : null);
+  const field = c.status==='pendente' ? 'done' : null;
   const allDone = c.checklist.every(i=>i.done);
-  const allConf = c.checklist.every(i=>i.confDone);
 
   let selectAllRow = '';
   if(field){
-    const all = field==='done' ? allDone : allConf;
+    const all = allDone;
     selectAllRow = `<label class="select-all-row">
       <input type="checkbox" ${all?'checked':''} onchange="toggleAllItems('${cl.id}','${field}')">
       <span>Marcar todos</span>
@@ -1517,14 +1508,8 @@ function detailHtml(cl, c){
 
   let actionButtons = '', hint = '';
   if(c.status==='pendente'){
-    actionButtons = `<button class="btn" ${allDone?'':'disabled'} onclick="sendToConference('${cl.id}')">Enviar para conferência</button>`;
-    if(!allDone) hint = `<div class="hint">Marque todos os itens do checklist para liberar o envio à conferência.</div>`;
-  } else if(c.status==='em_conferencia'){
-    const sameUser = currentUser && currentUser===c.executor;
-    actionButtons = `<button class="btn ghost small" onclick="reopenClosing('${cl.id}')">Reabrir</button>
-      <button class="btn" ${allConf?'':'disabled'} onclick="approveConference('${cl.id}')">Aprovar conferência</button>`;
-    if(!allConf) hint = `<div class="hint">Marque os itens conferidos para liberar a aprovação.</div>`;
-    if(sameUser) hint += `<div class="hint warn">Atenção: você também foi quem realizou este fechamento. O ideal é que a conferência seja feita por outra pessoa.</div>`;
+    actionButtons = `<button class="btn" ${allDone?'':'disabled'} onclick="sendToFinalReview('${cl.id}')">Enviar para revisão final</button>`;
+    if(!allDone) hint = `<div class="hint">Marque todos os itens do checklist para liberar o envio à revisão final.</div>`;
   } else if(c.status==='revisao_final'){
     actionButtons = `<button class="btn ghost small" onclick="reopenClosing('${cl.id}')">Reabrir</button>
       <button class="btn" onclick="finalizeClosing('${cl.id}')">Finalizar fechamento</button>`;
@@ -1548,9 +1533,8 @@ function detailHtml(cl, c){
     <div class="dchecks">${rows}</div>
     ${hint}
     <div class="signoffs">
-      <div class="signoff"><div class="role">Fechamento</div><div class="name ${!c.executor?'empty':''}">${c.executor?escapeHtml(c.executor):'—'}</div></div>
-      <div class="signoff"><div class="role">Conferência</div><div class="name ${!c.conferente?'empty':''}">${c.conferente?escapeHtml(c.conferente):'—'}</div></div>
-      <div class="signoff"><div class="role">Aprovação</div><div class="name ${!c.aprovador?'empty':''}">${c.aprovador?escapeHtml(c.aprovador):'—'}</div></div>
+      <div class="signoff"><div class="role">Fechamento inicial</div><div class="name ${!c.executor?'empty':''}">${c.executor?escapeHtml(c.executor):'—'}</div></div>
+      <div class="signoff"><div class="role">Revisão final</div><div class="name ${!c.aprovador?'empty':''}">${c.aprovador?escapeHtml(c.aprovador):'—'}</div></div>
     </div>
     ${historyHtml}
     <div class="dfoot">${cascadeCheckbox}${actionButtons}</div>
@@ -1574,7 +1558,7 @@ function closeRank(){ currentView = 'main'; render(); }
 function setRankTab(t){ rankTab = t; render(); }
 function setRankStage(i){ rankStage = i; render(); }
 
-// 1ª etapa = saiu de "pendente"; 2ª = conferência aprovada; 3ª = fechamento concluído.
+// 1ª etapa = saiu de "pendente" (fechamento inicial); 2ª = revisão final concluída.
 function computeRankData(){
   const [yy, curM] = currentMonthKey.split('-').map(Number);
   const keys = [];
@@ -1587,12 +1571,12 @@ function computeRankData(){
   const rank = e => e ? (STATUS_ORDER[e.status] || 0) : 0;
   // Cada empresa só conta nos meses entre o início e o encerramento (mês fora do período = -1).
   const clients = config.clients.map(cl=>{
-    const s = [0,0,0]; let n = 0;
+    const s = [0,0]; let n = 0;
     const monthly = keys.map(k=>{
       if(!clientCounts(cl, k)) return -1;
       n++;
       const r = rank(parsed[k][cl.id]);
-      if(r>=1) s[0]++; if(r>=2) s[1]++; if(r>=3) s[2]++;
+      if(r>=1) s[0]++; if(r>=2) s[1]++;
       return r;
     });
     return { cl, s, monthly, n };
@@ -1600,20 +1584,20 @@ function computeRankData(){
   const byResp = {};
   clients.forEach(x=>{
     const key = x.cl.responsible || '__none__';
-    const e = byResp[key] || (byResp[key] = { key, name:x.cl.responsible || 'Sem responsável', nClients:0, tot:0, s:[0,0,0], monthS:keys.map(()=>[0,0,0]), monthN:keys.map(()=>0) });
+    const e = byResp[key] || (byResp[key] = { key, name:x.cl.responsible || 'Sem responsável', nClients:0, tot:0, s:[0,0], monthS:keys.map(()=>[0,0]), monthN:keys.map(()=>0) });
     e.nClients++; e.tot += x.n;
     x.s.forEach((v,i)=>{ e.s[i]+=v; });
     x.monthly.forEach((r,mi)=>{
       if(r<0) return;
       e.monthN[mi]++;
-      for(let st=0; st<3; st++){ if(r>=st+1) e.monthS[mi][st]++; }
+      for(let st=0; st<2; st++){ if(r>=st+1) e.monthS[mi][st]++; }
     });
   });
   const hidden = n => RESP_SUMMARY_HIDE.some(h=>n.toLowerCase().startsWith(h));
   const resp = Object.values(byResp).filter(e=>!hidden(e.name)).map(e=>{
     const p = e.s.map(v=> e.tot ? Math.round(100*v/e.tot) : 0);
-    const monthly = e.monthS.map((ms,mi)=> e.monthN[mi] ? Math.round(100*(ms[0]+ms[1]+ms[2])/(3*e.monthN[mi])) : null);
-    return { name:e.name, key:e.key, nClients:e.nClients, tot:e.tot, counts:e.s, p, geral: Math.round((p[0]+p[1]+p[2])/3), monthly };
+    const monthly = e.monthS.map((ms,mi)=> e.monthN[mi] ? Math.round(100*(ms[0]+ms[1])/(2*e.monthN[mi])) : null);
+    return { name:e.name, key:e.key, nClients:e.nClients, tot:e.tot, counts:e.s, p, geral: Math.round((p[0]+p[1])/2), monthly };
   });
   return { keys, clients, resp };
 }
@@ -1639,7 +1623,7 @@ function rankViewHtml(){
   const period = `${MONTH_ABBR[0]}–${MONTH_ABBR[d.keys.length-1]}/${yy} (${d.keys.length} ${d.keys.length===1?'mês':'meses'}, até o mês anterior ao selecionado)`;
   const tabs = [['geral','Geral'],['mes','Por mês'],['etapa','Por etapa'],['emp','Empresas concluídas']];
   const tabsHtml = `<div class="rtabs">${tabs.map(([k,l])=>`<button class="rt ${rankTab===k?'on':''}" onclick="setRankTab('${k}')">${l}</button>`).join('')}</div>`;
-  const stageNames = ['1ª · Fechamento','2ª · Conferência','3ª · Revisão final'];
+  const stageNames = ['1ª · Fechamento inicial','2ª · Revisão final'];
   let body = '';
 
   if(rankTab==='geral'){
@@ -1649,12 +1633,12 @@ function rankViewHtml(){
       <td>${rkBar(r.geral, r.geral+'%', 'geral')}</td></tr>`).join('');
     body = `<div class="rcard"><h4>Ranking geral por responsável</h4>
       <table class="rank"><thead><tr><th>#</th><th>Responsável</th>${stageNames.map(n=>`<th>${n}</th>`).join('')}<th>Geral</th></tr></thead><tbody>${rows}</tbody></table>
-      <p class="rsm" style="margin-top:10px">% de fechamentos (empresa × mês) que chegaram ao fim de cada etapa. Geral = média das três etapas.</p></div>`;
+      <p class="rsm" style="margin-top:10px">% de fechamentos (empresa × mês) que chegaram ao fim de cada etapa. Geral = média das duas etapas.</p></div>`;
   } else if(rankTab==='mes'){
     const rows = d.resp.slice().sort((a,b)=>b.geral-a.geral).map(r=>`<tr><td><b>${escapeHtml(r.name)}</b></td>${r.monthly.map(v=> v===null ? `<td><span class="rsm">—</span></td>` : `<td><span class="hm" style="--v:${v}">${v}%</span></td>`).join('')}</tr>`).join('');
     body = `<div class="rcard"><h4>Evolução por mês · % geral concluído</h4>
       <table class="rank hmt"><thead><tr><th>Responsável</th>${d.keys.map((k,i)=>`<th>${MONTH_ABBR[i]}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
-      <p class="rsm" style="margin-top:10px">Cada célula = % das empresas do responsável que concluíram as etapas naquele mês (média das três). Mais forte = melhor.</p></div>`;
+      <p class="rsm" style="margin-top:10px">Cada célula = % das empresas do responsável que concluíram as etapas naquele mês (média das duas). Mais forte = melhor.</p></div>`;
   } else if(rankTab==='etapa'){
     const si = rankStage;
     const rows = d.resp.slice().sort((a,b)=>b.p[si]-a.p[si]).map((r,i)=>`<tr>${rkPos(i)}<td><b>${escapeHtml(r.name)}</b></td><td>${rkBar(r.p[si], r.p[si]+'%')}</td><td class="rsm">${r.counts[si]}/${r.tot}</td></tr>`).join('');
@@ -1663,12 +1647,12 @@ function rankViewHtml(){
       <table class="rank"><thead><tr><th>#</th><th>Responsável</th><th>${stageNames[si]}</th><th>Fechamentos</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   } else {
     const hidden = n => RESP_SUMMARY_HIDE.some(h=>(n||'').toLowerCase().startsWith(h));
-    const list = d.clients.filter(x=>!hidden(x.cl.responsible)).slice().sort((a,b)=> (b.s[2]-a.s[2]) || (b.s[1]-a.s[1]) || (b.s[0]-a.s[0]) || a.cl.name.localeCompare(b.cl.name));
+    const list = d.clients.filter(x=>!hidden(x.cl.responsible)).slice().sort((a,b)=> (b.s[1]-a.s[1]) || (b.s[0]-a.s[0]) || a.cl.name.localeCompare(b.cl.name));
     const rows = list.map((x,i)=>`<tr>${rkPos(i)}<td><b>${escapeHtml(x.cl.name)}</b>${x.cl.closed?' <span class="rsm">(encerrada)</span>':''}</td><td class="rsm">${escapeHtml(x.cl.responsible||'—')}</td>
-      <td>${rkBar(Math.round(100*x.s[2]/x.n), x.s[2]+'/'+x.n+' meses')}</td>
-      <td class="rsm">${x.s[0]} · ${x.s[1]} · ${x.s[2]}</td></tr>`).join('');
+      <td>${rkBar(Math.round(100*x.s[1]/x.n), x.s[1]+'/'+x.n+' meses')}</td>
+      <td class="rsm">${x.s[0]} · ${x.s[1]}</td></tr>`).join('');
     body = `<div class="rcard"><h4>Empresas com fechamento concluído · janeiro até o mês anterior</h4>
-      <table class="rank"><thead><tr><th>#</th><th>Empresa</th><th>Responsável</th><th>Meses concluídos</th><th>Por etapa (1ª · 2ª · 3ª)</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      <table class="rank"><thead><tr><th>#</th><th>Empresa</th><th>Responsável</th><th>Meses concluídos</th><th>Por etapa (1ª · 2ª)</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   return head.replace('<p id="rankPeriod"></p>', `<p>${period}</p>`) + tabsHtml + body;
 }
