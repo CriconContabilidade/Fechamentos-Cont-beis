@@ -322,8 +322,8 @@ details.guide p{
 
 /* ===== Visual escuro (layout Stagiario) ===== */
 :root{color-scheme:dark;--accent1:#4f6bff;--accent2:#38bdf8;--accent-grad:linear-gradient(135deg,#4f6bff,#38bdf8);--panel:rgba(180,200,255,.05);--panel-border:rgba(160,180,255,.1);}
-body{background:#060a18;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
-.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 70% at 30% -10%,rgba(79,107,255,.22),transparent 60%),radial-gradient(ellipse 70% 60% at 100% 100%,rgba(56,189,248,.14),transparent 60%),radial-gradient(ellipse 100% 80% at 50% 50%,#0a1230 0%,#02040c 70%);}
+body{background:#0d1430;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 70% at 30% -10%,rgba(79,107,255,.22),transparent 60%),radial-gradient(ellipse 70% 60% at 100% 100%,rgba(56,189,248,.14),transparent 60%),radial-gradient(ellipse 100% 80% at 50% 50%,#142046 0%,#080d20 70%);}
 .stars{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;background-size:340px 340px;background-image:radial-gradient(1px 1px at 15% 25%,#cfe0ff 100%,transparent),radial-gradient(1px 1px at 65% 8%,#fff 100%,transparent),radial-gradient(1px 1px at 40% 60%,#b9c9ff 100%,transparent),radial-gradient(1px 1px at 85% 45%,#fff 100%,transparent),radial-gradient(1px 1px at 10% 80%,#cfe0ff 100%,transparent);}
 .app{position:relative;z-index:1;max-width:1100px;}
 select,input[type=text],input[type=email],input[type=password],textarea{color:var(--ink);}
@@ -338,7 +338,7 @@ select option{background:#0b0f1e;color:#e8edfb;}
 .pill:hover{border-color:var(--accent2);color:var(--ink);}
 .pill.rank{background:var(--accent-grad);border-color:transparent;color:#fff;font-weight:700;}
 
-.topbar{border-bottom:1px solid var(--panel-border);position:sticky;top:0;z-index:30;background:rgba(6,10,24,.88);backdrop-filter:blur(12px);margin:-28px -20px 22px;padding:18px 20px;}
+.topbar{border-bottom:1px solid var(--panel-border);position:sticky;top:0;z-index:30;background:rgba(13,20,48,.9);backdrop-filter:blur(12px);margin:-28px -20px 22px;padding:18px 20px;}
 @media print{.topbar{position:static;}}
 .brand{display:flex;align-items:center;gap:12px;}
 .brand .orb{width:44px;height:44px;border-radius:50%;background:#f4efe9;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -378,20 +378,20 @@ button.resp-chip:hover{border-color:var(--accent2);}
 .stamp.concluido{color:#34d399;background:rgba(52,211,153,.15);}
 .empty-state h3{font-family:inherit;}
 
-.detail{padding:14px 18px 18px;border-bottom:1px solid var(--panel-border);background:rgba(6,10,24,.55);}
+.detail{padding:14px 18px 18px;border-bottom:1px solid var(--panel-border);background:rgba(48,66,128,.32);}
 .stages{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
 .stage{flex:1;min-width:150px;padding:8px 12px;border-radius:12px;border:1px solid var(--panel-border);font-size:12px;color:#4c5378;}
 .stage b{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:1px;}
 .stage.done{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.06);color:#34d399;}.stage.done b{color:#34d399;}
 .stage.cur{border-color:rgba(79,107,255,.5);background:linear-gradient(135deg,rgba(79,107,255,.16),rgba(56,189,248,.08));color:var(--ink);}.stage.cur b{color:var(--ink);}
 .dchecks{margin-bottom:10px;}
-.check{padding:7px 2px;border-bottom:1px solid var(--panel-border);}
+.check{padding:5px 2px;border-bottom:1px solid var(--panel-border);}
 .check .line{display:flex;align-items:center;gap:10px;}
 .check input[type=checkbox]{width:17px;height:17px;accent-color:#4f6bff;cursor:pointer;flex-shrink:0;}
 .check input[type=checkbox]:disabled{cursor:not-allowed;}
 .check .t{flex:0 1 38%;font-size:13.5px;}
 .check.done .t{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:#4c5378;}
-.obs{flex:1;min-width:0;padding:6px 10px;border-radius:8px;border:1px solid var(--panel-border);background:rgba(255,255,255,.03);color:var(--ink);font-size:12.5px;font-family:inherit;}
+.obs{flex:1;min-width:0;padding:5px 10px;border-radius:8px;border:1px solid var(--panel-border);background:rgba(255,255,255,.03);color:var(--ink);font-size:12.5px;font-family:inherit;}
 .obs::placeholder{color:#4c5378;}
 .obs:focus{outline:none;border-color:var(--accent2);}
 .obs:disabled{background:transparent;}
